@@ -6,25 +6,27 @@ namespace QuickJS
 	/// Object Writer/Reader flags.
 	/// </summary>
 	[Flags]
-	public enum JSReaderWriterFlags
+	public enum JSReaderFlags
 	{
 		/// <summary>
 		/// Allow function/module
 		/// </summary>
-		WriteObjBytecode = (1 << 0),
+		ObjBytecode = (1 << 0),
+
 		/// <summary>
-		/// Byte swapped output
+		/// Avoid duplicating &apos;buf&apos; data
 		/// </summary>
-		WriteObjBSwap = (1 << 1),
+		ObjRomData = (1 << 1),
+
 		/// <summary>
-		/// Allow function/module
+		/// Allow SharedArrayBuffer
 		/// </summary>
-		ReadObjBytecode = (1 << 0),
+		ObjSab = (1 << 2),
+
 		/// <summary>
-		/// Avoid duplicating 'buf' data
+		/// Allow object references
 		/// </summary>
-		ReadObjRomData = (1 << 1) /*  */
+		ObjReference = (1 << 3),
+
 	}
-
-
 }

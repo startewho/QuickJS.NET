@@ -77,7 +77,6 @@ namespace QuickJS
 		{
 			if (!_handle.IsAllocated)
 				return;
-			js_std_free_handlers(_runtime);
 			JS_FreeRuntime(_runtime);
 			_handle.Free();
 		}
@@ -298,6 +297,23 @@ namespace QuickJS
 			} while (!onlyOnce);
 
 			return JS_IsJobPending(this.NativeInstance);
+		}
+
+		/// <summary>
+		/// Initializes handlers of the &apos;std&apos; module.
+		/// </summary>
+		public void StdInitHandlers()
+		{
+			js_std_init_handlers(this.NativeInstance);
+		}
+
+		/// <summary>
+		/// Frees handlers of the &apos;std&apos; module.
+		/// </summary>
+		/// <remarks>Should be called just before freeing the <see cref="QuickJSRuntime"/>.</remarks>
+		public void StdFreeHandlers()
+		{
+			js_std_free_handlers(this.NativeInstance);
 		}
 
 		/// <summary>

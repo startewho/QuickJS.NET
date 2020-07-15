@@ -32,6 +32,18 @@ namespace QuickJS.Native
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
 		public static extern void js_std_loop(JSContext ctx);
 
+		/// <summary>
+		/// Initializes handlers of the &apos;std&apos; module.
+		/// </summary>
+		/// <param name="rt">The pointer to a JavaScript runtime.</param>
+		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
+		public static extern void js_std_init_handlers(JSRuntime rt);
+
+		/// <summary>
+		/// Frees handlers of the &apos;std&apos; module.
+		/// </summary>
+		/// <param name="rt">The pointer to a JavaScript runtime.</param>
+		/// <remarks>Should be called just before freeing the JSRuntime.</remarks>
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
 		public static extern void js_std_free_handlers(JSRuntime rt);
 
@@ -1362,11 +1374,27 @@ namespace QuickJS.Native
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
 		public static extern int JS_DeleteProperty(JSContext ctx, [In] JSValue obj, JSAtom prop, JSPropertyFlags flags);
 
+		/// <summary>
+		/// Sets the prototype object for a specified object.
+		/// </summary>
+		/// <param name="ctx">The context in which to set the object&apos;s prototype.</param>
+		/// <param name="obj">	The object to modify.</param>
+		/// <param name="proto">The object to set as the new prototype of <paramref name="obj"/>.</param>
+		/// <returns></returns>
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
-		public static extern int JS_SetPrototype(JSContext ctx, [In] JSValue obj, [In] JSValue proto_val);
+		public static extern int JS_SetPrototype(JSContext ctx, [In] JSValue obj, [In] JSValue proto);
 
+		/// <summary>
+		/// Retrieves the prototype of a specified object, <paramref name="obj"/>.
+		/// </summary>
+		/// <param name="ctx">Pointer to a JS context from which to derive runtime information.</param>
+		/// <param name="obj">Object for which to retrieve the prototype.</param>
+		/// <returns>
+		/// Return an Object, <see cref="JSValue.Null"/> or <see cref="JSValue.Exception"/>
+		/// in case of Proxy object.
+		/// </returns>
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
-		public static extern JSValue JS_GetPrototype(JSContext ctx, [In] JSValue val);
+		public static extern JSValue JS_GetPrototype(JSContext ctx, [In] JSValue obj);
 
 		/// <summary>
 		/// Gets an array of all properties found directly in a given object.
@@ -1572,6 +1600,78 @@ namespace QuickJS.Native
 		public static extern JSValue JS_ParseJSON(JSContext ctx, [MarshalAs(UnmanagedType.LPStr)] string json, SizeT len, [MarshalAs(UnmanagedType.LPStr)] string filename);
 
 		/// <summary>
+		/// Parses the specified buffer as JSON string, constructing the JavaScript value or object described by the string.
+		/// </summary>
+		/// <param name="ctx">A pointer to the JavaScript context.</param>
+		/// <param name="buffer">
+		/// An unsafe pointer to a buffer that contains a JSON string.
+		/// Must be zero terminated (i.e. buffer[bufferSize] = &apos;\0&apos;).
+		/// </param>
+		/// <param name="bufferSize">The size of the buffer.</param>
+		/// <param name="filename">The name of the JSON file.</param>
+		/// <param name="flags">A bitwise combination of <see cref="JSParseJsonFlags"/>.</param>
+		/// <returns>The new <see cref="JSValue"/> corresponding to the given JSON text or <see cref="JSValue.Exception"/>.</returns>
+		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
+		public unsafe static extern JSValue JS_ParseJSON2(JSContext ctx, byte* buffer, SizeT bufferSize, byte* filename, JSParseJsonFlags flags);
+
+		/// <summary>
+		/// Parses the specified buffer as JSON string, constructing the JavaScript value or object described by the string.
+		/// </summary>
+		/// <param name="ctx">A pointer to the JavaScript context.</param>
+		/// <param name="buffer">
+		/// An unsafe pointer to a buffer that contains a JSON string.
+		/// Must be zero terminated (i.e. buffer[bufferSize] = &apos;\0&apos;).
+		/// </param>
+		/// <param name="bufferSize">The size of the buffer.</param>
+		/// <param name="filename">The name of the JSON file.</param>
+		/// <param name="flags">A bitwise combination of <see cref="JSParseJsonFlags"/>.</param>
+		/// <returns>The new <see cref="JSValue"/> corresponding to the given JSON text or <see cref="JSValue.Exception"/>.</returns>
+		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+		public unsafe static extern JSValue JS_ParseJSON2(JSContext ctx, byte* buffer, SizeT bufferSize, [MarshalAs(UnmanagedType.LPStr)] string filename, JSParseJsonFlags flags);
+
+		/// <summary>
+		/// Parses the specified buffer as JSON string, constructing the JavaScript value or object.
+		/// </summary>
+		/// <param name="ctx">A pointer to the JavaScript context.</param>
+		/// <param name="buffer">
+		/// A pointer to a buffer that contains a JSON string.
+		/// Must be zero terminated (i.e. buffer[bufferSize] = &apos;\0&apos;).
+		/// </param>
+		/// <param name="bufferSize">The size of the buffer.</param>
+		/// <param name="filename">The name of the JSON file.</param>
+		/// <param name="flags">A bitwise combination of <see cref="JSParseJsonFlags"/>.</param>
+		/// <returns>The new <see cref="JSValue"/> corresponding to the given JSON text or <see cref="JSValue.Exception"/>.</returns>
+		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+		public static extern JSValue JS_ParseJSON2(JSContext ctx, IntPtr buffer, SizeT bufferSize, [MarshalAs(UnmanagedType.LPStr)] string filename, JSParseJsonFlags flags);
+
+		/// <summary>
+		/// Parses the specified buffer as JSON string, constructing the JavaScript value or object described by the string.
+		/// </summary>
+		/// <param name="ctx">A pointer to the JavaScript context.</param>
+		/// <param name="buffer">
+		/// The buffer that contains a JSON string.
+		/// Must be zero terminated (i.e. buffer[bufferSize] = &apos;\0&apos;).
+		/// </param>
+		/// <param name="bufferSize">The size of the buffer reduced by 1.</param>
+		/// <param name="filename">The name of the JSON file.</param>
+		/// <param name="flags">A bitwise combination of <see cref="JSParseJsonFlags"/>.</param>
+		/// <returns>The new <see cref="JSValue"/> corresponding to the given JSON text or <see cref="JSValue.Exception"/>.</returns>
+		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+		public static extern JSValue JS_ParseJSON2(JSContext ctx, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)] byte[] buffer, SizeT bufferSize, [MarshalAs(UnmanagedType.LPStr)] string filename, JSParseJsonFlags flags);
+
+		/// <summary>
+		/// Parses the specified JSON string, constructing the JavaScript value or object described by the string.
+		/// </summary>
+		/// <param name="ctx">A pointer to the JavaScript context.</param>
+		/// <param name="json">The string to parse as JSON.</param>
+		/// <param name="len">The size of the buffer reduced by 1.</param>
+		/// <param name="filename">The name of the JSON file.</param>
+		/// <param name="flags">A bitwise combination of <see cref="JSParseJsonFlags"/>.</param>
+		/// <returns>The new <see cref="JSValue"/> corresponding to the given JSON text or <see cref="JSValue.Exception"/>.</returns>
+		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+		public static extern JSValue JS_ParseJSON2(JSContext ctx, [MarshalAs(UnmanagedType.LPStr)] string json, SizeT len, [MarshalAs(UnmanagedType.LPStr)] string filename, JSParseJsonFlags flags);
+
+		/// <summary>
 		/// Converts a JavaScript object or value to a JSON string, optionally replacing values
 		/// if a replacer function is specified or optionally including only the specified
 		/// properties if a replacer array is specified.
@@ -1616,6 +1716,9 @@ namespace QuickJS.Native
 
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
 		public static extern JSValue JS_GetTypedArrayBuffer(JSContext ctx, [In] JSValue obj, out SizeT byte_offset, out SizeT byte_length, out SizeT bytes_per_element);
+
+		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
+		public static extern void JS_SetSharedArrayBufferFunctions(JSRuntime rt, in JSSharedArrayBufferFunctions sf);
 
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
 		public unsafe static extern JSValue JS_NewPromiseCapability(JSContext ctx, JSValue* resolving_funcs);
@@ -1697,7 +1800,7 @@ namespace QuickJS.Native
 		/// <returns></returns>
 		/// <remarks>Object writer currently only used to handle precompiled code.</remarks>
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
-		public static extern IntPtr JS_WriteObject(JSContext ctx, out SizeT bufferSize, [In] JSValue obj, JSReaderWriterFlags flags);
+		public static extern IntPtr JS_WriteObject(JSContext ctx, out SizeT bufferSize, [In] JSValue obj, JSWriterFlags flags);
 
 		/// <summary>
 		/// 
@@ -1709,7 +1812,7 @@ namespace QuickJS.Native
 		/// <returns></returns>
 		/// <remarks>Object reader currently only used to handle precompiled code.</remarks>
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
-		public static extern JSValue JS_ReadObject(JSContext ctx, IntPtr buffer, SizeT bufferSize, JSReaderWriterFlags flags);
+		public static extern JSValue JS_ReadObject(JSContext ctx, IntPtr buffer, SizeT bufferSize, JSReaderFlags flags);
 
 		/* load the dependencies of the module 'obj'. Useful when JS_ReadObject() returns a module. */
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
