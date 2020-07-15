@@ -636,9 +636,29 @@ namespace QuickJS.Native
 		[return: MarshalAs(UnmanagedType.Bool)]
 		public static extern bool JS_IsError(JSContext ctx, [In] JSValue val);
 
+		/// <summary>
+		/// Determine if the specified <see cref="JSValue"/> is an uncatchable Error object.
+		/// </summary>
+		/// <param name="ctx">The pointer to the context that the <see cref="JSValue"/> belongs to.</param>
+		/// <param name="val">The <see cref="JSValue"/> to test.</param>
+		/// <returns>true if the value <paramref name="val"/> is holding an uncatchable Error object; otherwise, false.</returns>
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
-		public static extern void JS_EnableIsErrorProperty(JSContext ctx, [MarshalAs(UnmanagedType.Bool)] bool enable);
+		[return: MarshalAs(UnmanagedType.Bool)]
+		public static extern bool JS_IsUncatchableError(JSContext ctx, JSValue val);
 
+		/// <summary>
+		/// Sets a specific flag to the specified Error object to avoid catching.
+		/// </summary>
+		/// <param name="ctx">The pointer to the context that the <see cref="JSValue"/> belongs to.</param>
+		/// <param name="val">The Error object.</param>
+		/// <param name="uncatchable">If true, error is not catchable.</param>
+		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
+		public static extern void JS_SetUncatchableError(JSContext ctx, JSValue val, [MarshalAs(UnmanagedType.Bool)] bool uncatchable);
+
+		/// <summary>
+		/// Allows catching the current exception.
+		/// </summary>
+		/// <param name="ctx">The pointer to the context that the <see cref="JSValue"/> belongs to.</param>
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
 		public static extern void JS_ResetUncatchableError(JSContext ctx);
 
