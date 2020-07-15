@@ -211,7 +211,7 @@ namespace QuickJS.Native
 		/// <summary>
 		/// Enable operator overloading. Must be called after all overloadable base types are initialized.
 		/// </summary>
-		/// <param name="ctx">The pointer the native JSContext.</param>
+		/// <param name="ctx">The pointer to the native JSContext.</param>
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
 		public static extern void JS_AddIntrinsicOperators(JSContext ctx);
 
