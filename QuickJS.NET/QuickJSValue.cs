@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading;
 using QuickJS.Native;
 using static QuickJS.Native.QuickJSNativeApi;
 
@@ -15,8 +16,7 @@ namespace QuickJS
 	{
 		private delegate void CreateVoidDelegate();
 
-		private QuickJSContext _context;
-		private readonly JSValue _value;
+		private QuickJSRefcounted _refcounted;
 
 		/// <summary>
 		/// A read-only field that represents the JavaScript undefined value.
@@ -103,9 +103,13 @@ namespace QuickJS
 			if (value.Tag != JSTag.Object)
 				throw new ArgumentOutOfRangeException(nameof(value));
 
-			_context = context;
-			_value = value;
-			_context.AddValue(this);
+			_refcounted = new QuickJSRefcounted(context, value);
+			context.AddValue(_refcounted);
+		}
+
+		~QuickJSValue()
+		{
+			Dispose(false);
 		}
 
 		/// <summary>
@@ -123,7 +127,7 @@ namespace QuickJS
 		/// </summary>
 		public JSTag Tag
 		{
-			get { return _value.Tag; }
+			get { return this.NativeInstance.Tag; }
 		}
 
 		/// <summary>
@@ -133,7 +137,7 @@ namespace QuickJS
 		{
 			get
 			{
-				return JS_IsFunction(_context.NativeInstance, _value);
+				return JS_IsFunction(Context.NativeInstance, this.NativeInstance);
 			}
 		}
 
@@ -144,7 +148,7 @@ namespace QuickJS
 		{
 			get
 			{
-				return JS_IsArray(_context.NativeInstance, _value) == 1;
+				return JS_IsArray(Context.NativeInstance, this.NativeInstance) == 1;
 			}
 		}
 
@@ -155,9 +159,9 @@ namespace QuickJS
 		{
 			get
 			{
-				if (_context is null)
+				if (_refcounted is null)
 					throw new ObjectDisposedException(this.GetType().Name);
-				return _value;
+				return _refcounted.NativeValue;
 			}
 		}
 
@@ -167,7 +171,22 @@ namespace QuickJS
 		/// <returns><see cref="JSValue"/> referenced by this instance.</returns>
 		public JSValue GetNativeInstance()
 		{
-			return JS_DupValue(_context.NativeInstance, _value);
+			return JS_DupValue(Context.NativeInstance, this.NativeInstance);
+		}
+
+		private QuickJSContext Context
+		{
+			get
+			{
+				if (_refcounted is null)
+					throw new ObjectDisposedException(this.GetType().Name);
+				return _refcounted.Context;
+			}
+		}
+
+		internal QuickJSRefcounted GetRefcounted()
+		{
+			return _refcounted;
 		}
 
 		/// <summary>
@@ -182,7 +201,7 @@ namespace QuickJS
 		{
 			fixed (byte* aName = Utils.StringToManagedUTF8(name))
 			{
-				return DefinePropertyInternal(aName, _context.CreateFunctionRawInternal(aName, func, argCount), flags);
+				return DefinePropertyInternal(aName, Context.CreateFunctionRawInternal(aName, func, argCount), flags);
 			}
 		}
 
@@ -201,7 +220,7 @@ namespace QuickJS
 			}
 			else
 			{
-				if (!_context.IsCompatibleWith(value._context))
+				if (!Context.IsCompatibleWith(value.Context))
 					throw new ArgumentOutOfRangeException(nameof(value));
 				return DefineProperty(name, value.GetNativeInstance(), flags);
 			}
@@ -216,7 +235,7 @@ namespace QuickJS
 		/// <returns>true if the property has been defined or redefined; otherwise false.</returns>
 		public bool DefineProperty(string name, int value, JSPropertyFlags flags)
 		{
-			return DefineProperty(name, JS_NewInt32(_context.NativeInstance, value), flags);
+			return DefineProperty(name, JS_NewInt32(Context.NativeInstance, value), flags);
 		}
 
 		/// <summary>
@@ -228,7 +247,7 @@ namespace QuickJS
 		/// <returns>true if the property has been defined or redefined; otherwise false.</returns>
 		public bool DefineProperty(string name, long value, JSPropertyFlags flags)
 		{
-			return DefineProperty(name, JS_NewInt64(_context.NativeInstance, value), flags);
+			return DefineProperty(name, JS_NewInt64(Context.NativeInstance, value), flags);
 		}
 
 		/// <summary>
@@ -240,7 +259,7 @@ namespace QuickJS
 		/// <returns>true if the property has been defined or redefined; otherwise false.</returns>
 		public bool DefineProperty(string name, double value, JSPropertyFlags flags)
 		{
-			return DefineProperty(name, JS_NewFloat64(_context.NativeInstance, value), flags);
+			return DefineProperty(name, JS_NewFloat64(Context.NativeInstance, value), flags);
 		}
 
 		/// <summary>
@@ -252,7 +271,7 @@ namespace QuickJS
 		/// <returns>true if the property has been defined or redefined; otherwise false.</returns>
 		public bool DefineProperty(string name, bool value, JSPropertyFlags flags)
 		{
-			return DefineProperty(name, JS_NewBool(_context.NativeInstance, value), flags);
+			return DefineProperty(name, JS_NewBool(Context.NativeInstance, value), flags);
 		}
 
 		/// <summary>
@@ -264,7 +283,7 @@ namespace QuickJS
 		/// <returns>true if the property has been defined or redefined; otherwise false.</returns>
 		public bool DefineProperty(string name, string value, JSPropertyFlags flags)
 		{
-			return DefineProperty(name, JSValue.Create(_context.NativeInstance, value), flags);
+			return DefineProperty(name, JSValue.Create(Context.NativeInstance, value), flags);
 		}
 
 		/// <summary>
@@ -301,14 +320,14 @@ namespace QuickJS
 		public unsafe bool DefineProperty(string name, JSCFunction getter, JSCFunction setter, JSPropertyFlags flags)
 		{
 			JSValue getterVal, setterVal;
-			getterVal = getter is null ? JSValue.Undefined : _context.CreateFunctionRaw("get_" + name, getter, 0);
+			getterVal = getter is null ? JSValue.Undefined : Context.CreateFunctionRaw("get_" + name, getter, 0);
 			try
 			{
-				setterVal = setter is null ? JSValue.Undefined : _context.CreateFunctionRaw("set_" + name, setter, 1);
+				setterVal = setter is null ? JSValue.Undefined : Context.CreateFunctionRaw("set_" + name, setter, 1);
 			}
 			catch
 			{
-				JS_FreeValue(_context.NativeInstance, getterVal);
+				JS_FreeValue(Context.NativeInstance, getterVal);
 				throw;
 			}
 			fixed (byte* aName = Utils.StringToManagedUTF8(name))
@@ -342,7 +361,7 @@ namespace QuickJS
 
 		private unsafe bool DefinePropertyInternal(byte* name, JSValue getter, JSValue setter, JSPropertyFlags flags)
 		{
-			JSContext context = _context.NativeInstance;
+			JSContext context = Context.NativeInstance;
 
 			if (name == null)
 			{
@@ -352,7 +371,7 @@ namespace QuickJS
 			}
 
 			JSAtom prop = JS_NewAtom(context, name);
-			int rv = JS_DefinePropertyGetSet(context, _value, prop, getter, setter, flags & JSPropertyFlags.CWE);
+			int rv = JS_DefinePropertyGetSet(context, this.NativeInstance, prop, getter, setter, flags & JSPropertyFlags.CWE);
 			JS_FreeAtom(context, prop);
 			if (rv == -1)
 				context.ThrowPendingException();
@@ -363,13 +382,13 @@ namespace QuickJS
 		{
 			if (name == null)
 			{
-				JS_FreeValue(_context.NativeInstance, value);
+				JS_FreeValue(Context.NativeInstance, value);
 				throw new ArgumentNullException(nameof(name));
 			}
 
-			int rv = JS_DefinePropertyValueStr(_context.NativeInstance, _value, name, value, flags & JSPropertyFlags.CWE);
+			int rv = JS_DefinePropertyValueStr(Context.NativeInstance, this.NativeInstance, name, value, flags & JSPropertyFlags.CWE);
 			if (rv == -1)
-				_context.NativeInstance.ThrowPendingException();
+				Context.NativeInstance.ThrowPendingException();
 			return rv == 1;
 		}
 
@@ -384,7 +403,7 @@ namespace QuickJS
 		{
 			fixed (byte* aName = Utils.StringToManagedUTF8(name))
 			{
-				return SetPropertyInternal(aName, JS_NewInt32(_context.NativeInstance, value));
+				return SetPropertyInternal(aName, JS_NewInt32(Context.NativeInstance, value));
 			}
 		}
 
@@ -398,7 +417,7 @@ namespace QuickJS
 		{
 			fixed (byte* aName = Utils.StringToManagedUTF8(name))
 			{
-				return SetPropertyInternal(aName, JS_NewInt64(_context.NativeInstance, value));
+				return SetPropertyInternal(aName, JS_NewInt64(Context.NativeInstance, value));
 			}
 		}
 
@@ -412,7 +431,7 @@ namespace QuickJS
 		{
 			fixed (byte* aName = Utils.StringToManagedUTF8(name))
 			{
-				return SetPropertyInternal(aName, JS_NewFloat64(_context.NativeInstance, value));
+				return SetPropertyInternal(aName, JS_NewFloat64(Context.NativeInstance, value));
 			}
 		}
 
@@ -426,7 +445,7 @@ namespace QuickJS
 		{
 			fixed (byte* aName = Utils.StringToManagedUTF8(name))
 			{
-				return SetPropertyInternal(aName, JS_NewBool(_context.NativeInstance, value));
+				return SetPropertyInternal(aName, JS_NewBool(Context.NativeInstance, value));
 			}
 		}
 
@@ -444,7 +463,7 @@ namespace QuickJS
 			}
 			else
 			{
-				if (!_context.IsCompatibleWith(value._context))
+				if (!Context.IsCompatibleWith(value.Context))
 					throw new ArgumentOutOfRangeException(nameof(value));
 				return SetProperty(name, value.GetNativeInstance());
 			}
@@ -458,7 +477,7 @@ namespace QuickJS
 		/// <returns>On success, returns true; otherwise, false.</returns>
 		public bool SetProperty(string name, string value)
 		{
-			return SetProperty(name, JSValue.Create(_context.NativeInstance, value));
+			return SetProperty(name, JSValue.Create(Context.NativeInstance, value));
 		}
 
 		/// <summary>
@@ -479,13 +498,13 @@ namespace QuickJS
 		{
 			if (name == null)
 			{
-				JS_FreeValue(_context.NativeInstance, value);
+				JS_FreeValue(Context.NativeInstance, value);
 				throw new ArgumentNullException(nameof(name));
 			}
 
-			int rv = JS_SetPropertyStr(_context.NativeInstance, _value, name, value);
+			int rv = JS_SetPropertyStr(Context.NativeInstance, this.NativeInstance, name, value);
 			if (rv == -1)
-				_context.NativeInstance.ThrowPendingException();
+				Context.NativeInstance.ThrowPendingException();
 			return rv == 1;
 		}
 
@@ -497,7 +516,7 @@ namespace QuickJS
 		/// <returns>On success, returns true; otherwise, false.</returns>
 		public bool SetProperty(int index, int value)
 		{
-			return SetProperty(index, JS_NewInt32(_context.NativeInstance, value));
+			return SetProperty(index, JS_NewInt32(Context.NativeInstance, value));
 		}
 
 		/// <summary>
@@ -508,7 +527,7 @@ namespace QuickJS
 		/// <returns>On success, returns true; otherwise, false.</returns>
 		public bool SetProperty(int index, long value)
 		{
-			return SetProperty(index, JS_NewInt64(_context.NativeInstance, value));
+			return SetProperty(index, JS_NewInt64(Context.NativeInstance, value));
 		}
 
 		/// <summary>
@@ -519,7 +538,7 @@ namespace QuickJS
 		/// <returns>On success, returns true; otherwise, false.</returns>
 		public bool SetProperty(int index, double value)
 		{
-			return SetProperty(index, JS_NewFloat64(_context.NativeInstance, value));
+			return SetProperty(index, JS_NewFloat64(Context.NativeInstance, value));
 		}
 
 		/// <summary>
@@ -530,7 +549,7 @@ namespace QuickJS
 		/// <returns>On success, returns true; otherwise, false.</returns>
 		public bool SetProperty(int index, bool value)
 		{
-			return SetProperty(index, JS_NewBool(_context.NativeInstance, value));
+			return SetProperty(index, JS_NewBool(Context.NativeInstance, value));
 		}
 
 		/// <summary>
@@ -547,7 +566,7 @@ namespace QuickJS
 			}
 			else
 			{
-				if (!_context.IsCompatibleWith(value._context))
+				if (!Context.IsCompatibleWith(value.Context))
 					throw new ArgumentOutOfRangeException(nameof(value));
 				return SetProperty(index, value.GetNativeInstance());
 			}
@@ -561,7 +580,7 @@ namespace QuickJS
 		/// <returns>On success, returns true; otherwise, false.</returns>
 		public bool SetProperty(int index, string value)
 		{
-			return SetProperty(index, JSValue.Create(_context.NativeInstance, value));
+			return SetProperty(index, JSValue.Create(Context.NativeInstance, value));
 		}
 
 		/// <summary>
@@ -575,9 +594,9 @@ namespace QuickJS
 			if (index < 0)
 				throw new ArgumentOutOfRangeException(nameof(index));
 
-			int rv = JS_SetPropertyUint32(_context.NativeInstance, _value, unchecked((uint)index), value);
+			int rv = JS_SetPropertyUint32(Context.NativeInstance, this.NativeInstance, unchecked((uint)index), value);
 			if (rv == -1)
-				_context.NativeInstance.ThrowPendingException();
+				Context.NativeInstance.ThrowPendingException();
 			return rv == 1;
 		}
 
@@ -596,7 +615,7 @@ namespace QuickJS
 
 			fixed (byte* aName = Utils.StringToManagedUTF8(name))
 			{
-				return _context.ConvertJSValueToClrObject(JS_GetPropertyStr(_context.NativeInstance, _value, aName), true);
+				return Context.ConvertJSValueToClrObject(JS_GetPropertyStr(Context.NativeInstance, this.NativeInstance, aName), true);
 			}
 		}
 
@@ -613,7 +632,7 @@ namespace QuickJS
 			if (index < 0)
 				throw new ArgumentOutOfRangeException(nameof(index));
 
-			return _context.ConvertJSValueToClrObject(JS_GetPropertyUint32(_context.NativeInstance, _value, unchecked((uint)index)), true);
+			return Context.ConvertJSValueToClrObject(JS_GetPropertyUint32(Context.NativeInstance, this.NativeInstance, unchecked((uint)index)), true);
 		}
 
 		/// <summary>
@@ -632,7 +651,7 @@ namespace QuickJS
 			}
 			set
 			{
-				SetProperty(name, _context.ConvertClrObjectToJSValue(value));
+				SetProperty(name, Context.ConvertClrObjectToJSValue(value));
 			}
 		}
 
@@ -652,7 +671,7 @@ namespace QuickJS
 			}
 			set
 			{
-				SetProperty(index, _context.ConvertClrObjectToJSValue(value));
+				SetProperty(index, Context.ConvertClrObjectToJSValue(value));
 			}
 		}
 
@@ -662,9 +681,9 @@ namespace QuickJS
 		/// <returns>An object containing the return value of the invoked function.</returns>
 		public object Call()
 		{
-			JSValue value = JS_GetGlobalObject(_context.NativeInstance);
+			JSValue value = JS_GetGlobalObject(Context.NativeInstance);
 			if (JS_IsException(value))
-				_context.NativeInstance.ThrowPendingException();
+				Context.NativeInstance.ThrowPendingException();
 
 			try
 			{
@@ -672,7 +691,7 @@ namespace QuickJS
 			}
 			finally
 			{
-				JS_FreeValue(_context.NativeInstance, value);
+				JS_FreeValue(Context.NativeInstance, value);
 			}
 		}
 
@@ -688,7 +707,7 @@ namespace QuickJS
 		/// </returns>
 		public object Call(QuickJSValue thisArg)
 		{
-			return Call(thisArg is null ? JSValue.Null : thisArg._value);
+			return Call(thisArg is null ? JSValue.Null : thisArg.NativeInstance);
 		}
 
 		/// <summary>
@@ -706,7 +725,7 @@ namespace QuickJS
 		/// </returns>
 		public object Call(QuickJSValue thisArg, params JSValue[] args)
 		{
-			return Call(thisArg is null ? JSValue.Null : thisArg._value, args);
+			return Call(thisArg is null ? JSValue.Null : thisArg.NativeInstance, args);
 		}
 
 		/// <summary>
@@ -721,7 +740,7 @@ namespace QuickJS
 		/// </returns>
 		public unsafe object Call(JSValue thisArg)
 		{
-			return _context.ConvertJSValueToClrObject(JS_Call(_context.NativeInstance, _value, thisArg, 0, default(JSValue*)), true);
+			return Context.ConvertJSValueToClrObject(JS_Call(Context.NativeInstance, this.NativeInstance, thisArg, 0, default(JSValue*)), true);
 		}
 
 		/// <summary>
@@ -742,7 +761,7 @@ namespace QuickJS
 			if (args is null)
 				return Call(thisArg);
 
-			return _context.ConvertJSValueToClrObject(JS_Call(_context.NativeInstance, _value, thisArg, args.Length, args), true);
+			return Context.ConvertJSValueToClrObject(JS_Call(Context.NativeInstance, this.NativeInstance, thisArg, args.Length, args), true);
 		}
 
 		/// <summary>
@@ -768,12 +787,12 @@ namespace QuickJS
 		public bool TryGetJSON(QuickJSValue replacer, string space, out string json)
 		{
 			if (replacer is null)
-				return _value.TryGetJSON(_context.NativeInstance, JSValue.Undefined, space, out json);
+				return NativeInstance.TryGetJSON(Context.NativeInstance, JSValue.Undefined, space, out json);
 
-			if (!_context.IsCompatibleWith(replacer._context))
+			if (!Context.IsCompatibleWith(replacer.Context))
 				throw new ArgumentOutOfRangeException(nameof(replacer));
 
-			return _value.TryGetJSON(_context.NativeInstance, replacer._value, space, out json);
+			return NativeInstance.TryGetJSON(Context.NativeInstance, replacer.NativeInstance, space, out json);
 		}
 
 		/// <summary>
@@ -800,12 +819,12 @@ namespace QuickJS
 		public bool TryGetJSON(QuickJSValue replacer, int space, out string json)
 		{
 			if (replacer is null)
-				return _value.TryGetJSON(_context.NativeInstance, JSValue.Undefined, space, out json);
+				return NativeInstance.TryGetJSON(Context.NativeInstance, JSValue.Undefined, space, out json);
 
-			if (!_context.IsCompatibleWith(replacer._context))
+			if (!Context.IsCompatibleWith(replacer.Context))
 				throw new ArgumentOutOfRangeException(nameof(replacer));
 
-			return _value.TryGetJSON(_context.NativeInstance, replacer._value, space, out json);
+			return NativeInstance.TryGetJSON(Context.NativeInstance, replacer.NativeInstance, space, out json);
 		}
 
 		/// <summary>
@@ -817,7 +836,7 @@ namespace QuickJS
 		/// <returns>true if the operation is successful; otherwise, false.</returns>
 		public bool TryGetJSON(out string json)
 		{
-			return _value.TryGetJSON(_context.NativeInstance, out json);
+			return NativeInstance.TryGetJSON(Context.NativeInstance, out json);
 		}
 
 		/// <summary>
@@ -840,12 +859,12 @@ namespace QuickJS
 		public string ToJSON(QuickJSValue replacer, string space)
 		{
 			if (replacer is null)
-				return _value.ToJSON(_context.NativeInstance, JSValue.Undefined, space);
+				return NativeInstance.ToJSON(Context.NativeInstance, JSValue.Undefined, space);
 
-			if (!_context.IsCompatibleWith(replacer._context))
+			if (!Context.IsCompatibleWith(replacer.Context))
 				throw new ArgumentOutOfRangeException(nameof(replacer));
 
-			return _value.ToJSON(_context.NativeInstance, replacer.NativeInstance, space);
+			return NativeInstance.ToJSON(Context.NativeInstance, replacer.NativeInstance, space);
 		}
 
 		/// <summary>
@@ -869,12 +888,12 @@ namespace QuickJS
 		public string ToJSON(QuickJSValue replacer, int space)
 		{
 			if (replacer is null)
-				return _value.ToJSON(_context.NativeInstance, JSValue.Undefined, space);
+				return NativeInstance.ToJSON(Context.NativeInstance, JSValue.Undefined, space);
 
-			if (!_context.IsCompatibleWith(replacer._context))
+			if (!Context.IsCompatibleWith(replacer.Context))
 				throw new ArgumentOutOfRangeException(nameof(replacer));
 
-			return _value.ToJSON(_context.NativeInstance, replacer.NativeInstance, space);
+			return NativeInstance.ToJSON(Context.NativeInstance, replacer.NativeInstance, space);
 		}
 
 		/// <summary>
@@ -883,7 +902,7 @@ namespace QuickJS
 		/// <returns>The JSON string representing this <see cref="JSValue"/>.</returns>
 		public string ToJSON()
 		{
-			return _value.ToJSON(_context.NativeInstance);
+			return NativeInstance.ToJSON(Context.NativeInstance);
 		}
 
 		/// <summary>
@@ -896,13 +915,13 @@ namespace QuickJS
 		/// <exception cref="QuickJSException">An exception occurred.</exception>
 		public string[] GetOwnPropertyNames(JSGetPropertyNamesFlags flags)
 		{
-			JSContext ctx = _context.NativeInstance;
+			JSContext ctx = Context.NativeInstance;
 
 			JSPropertyEnum[] props = null;
 			try
 			{
-				if (0 != JS_GetOwnPropertyNames(ctx, out props, _value, flags))
-					_context.ThrowPendingException();
+				if (0 != JS_GetOwnPropertyNames(ctx, out props, this.NativeInstance, flags))
+					Context.ThrowPendingException();
 				if (props == null)
 					return null;
 				var names = new string[props.Length];
@@ -944,18 +963,26 @@ namespace QuickJS
 		/// </param>
 		protected virtual void Dispose(bool disposing)
 		{
-			if (_context is null)
+			if (_refcounted is null)
 				return;
-			_context.Runtime.VerifyAccess();
-			_context.RemoveValue(this);
-			JS_FreeValue(_context.NativeInstance, _value);
-			_context = null;
+
+			if (Context.Runtime.CheckAccess())
+			{
+				Context.RemoveValue(this.GetRefcounted());
+				JS_FreeValue(Context.NativeInstance, this.NativeInstance);
+				_refcounted = null;
+			}
+			else
+			{
+				Context.ReleaseInContextThread(this.GetRefcounted());
+			}
 		}
 
 		/// <inheritdoc/>
 		public void Dispose()
 		{
 			Dispose(true);
+			GC.SuppressFinalize(true);
 		}
 	}
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -29,12 +30,14 @@ namespace QuickJS
 		private readonly GCHandle _handle;
 		private Exception _clrException;
 #if NET20
-		private readonly List<QuickJSValue> _values = new List<QuickJSValue>();
+		private readonly List<QuickJSRefcounted> _values = new List<QuickJSRefcounted>();
 		private readonly List<QuickJSSafeDelegate> _functions = new List<QuickJSSafeDelegate>();
 #else
-		private readonly HashSet<QuickJSValue> _values = new HashSet<QuickJSValue>();
+		private readonly HashSet<QuickJSRefcounted> _values = new HashSet<QuickJSRefcounted>();
 		private readonly HashSet<QuickJSSafeDelegate> _functions = new HashSet<QuickJSSafeDelegate>();
 #endif
+		private List<QuickJSRefcounted> _finalizedValues = new List<QuickJSRefcounted>();
+		private EventHandler<HandledEventArgs> _onRuntimeInterrupt;
 
 		/// <summary>
 		/// Gets the <see cref="QuickJSContext"/> associated with the specified <see cref="JSContext"/>.
@@ -72,6 +75,8 @@ namespace QuickJS
 			if (runtime is null)
 				throw new ArgumentNullException(nameof(runtime));
 
+			_onRuntimeInterrupt = OnRuntimeInterrupt;
+
 			this.Runtime = runtime;
 			_context = raw ? JS_NewContextRaw(runtime.NativeInstance) : JS_NewContext(runtime.NativeInstance);
 			if (_context == JSContext.Null)
@@ -84,6 +89,7 @@ namespace QuickJS
 
 			_handle = GCHandle.Alloc(this, GCHandleType.Normal);
 			JS_SetContextOpaque(_context, GCHandle.ToIntPtr(_handle));
+			runtime.Interrupt += _onRuntimeInterrupt;
 		}
 
 
@@ -99,13 +105,18 @@ namespace QuickJS
 			if (!_handle.IsAllocated)
 				return;
 
+			Runtime.CheckAccess();
+			Runtime.Interrupt -= _onRuntimeInterrupt;
+
 			lock (_AllContexts)
 			{
 				_AllContexts.Remove(_context);
 			}
 
-			foreach (QuickJSValue value in _values.ToArray())
-				value.Dispose();
+			foreach (QuickJSRefcounted refcounted in _values)
+			{
+				JS_FreeValue(_context, refcounted.NativeValue);
+			}
 
 			JS_FreeContext(_context);
 			_handle.Free();
@@ -115,7 +126,32 @@ namespace QuickJS
 		public void Dispose()
 		{
 			Dispose(true);
-			GC.SuppressFinalize(this);
+		}
+
+		private void OnRuntimeInterrupt(object sender, HandledEventArgs e)
+		{
+			QuickJSRefcounted[] refcounted;
+			lock (_finalizedValues)
+			{
+				refcounted = _finalizedValues.ToArray();
+				_finalizedValues.Clear();
+			}
+			foreach (QuickJSRefcounted item in refcounted)
+			{
+				JS_FreeValue(_context, item.NativeValue);
+				_values.Remove(item);
+			}
+		}
+
+		internal void ReleaseInContextThread(QuickJSRefcounted value)
+		{
+			if (value is null)
+				return;
+
+			lock (_finalizedValues)
+			{
+				_finalizedValues.Add(value);
+			}
 		}
 
 		/// <summary>
@@ -153,7 +189,7 @@ namespace QuickJS
 			return !(context is null) && context.Runtime.NativeInstance == this.Runtime.NativeInstance;
 		}
 
-		internal void AddValue(QuickJSValue value)
+		internal void AddValue(QuickJSRefcounted value)
 		{
 #if NET20
 			if (_values.Contains(value))
@@ -162,7 +198,7 @@ namespace QuickJS
 			_values.Add(value);
 		}
 
-		internal void RemoveValue(QuickJSValue value)
+		internal void RemoveValue(QuickJSRefcounted value)
 		{
 			_values.Remove(value);
 		}
