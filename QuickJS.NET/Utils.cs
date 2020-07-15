@@ -141,15 +141,22 @@ namespace QuickJS
 #endif
 		}
 
-		internal unsafe static JSValue ReportException(JSContext cx, Exception ex)
+		internal unsafe static JSValue ReportException(JSContext ctx, Exception ex)
 		{
-			IntPtr opaque = QuickJSNativeApi.JS_GetContextOpaque(cx);
+			IntPtr opaque = QuickJSNativeApi.JS_GetContextOpaque(ctx);
 			if (opaque != IntPtr.Zero)
 				((QuickJSContext)GCHandle.FromIntPtr(opaque).Target).SetClrException(ex);
 
-			fixed (byte* msg = Utils.StringToManagedUTF8(ex.Message.Replace("%", "%%")))
+			fixed (byte* msg = Utils.StringToManagedUTF8((ex.Message ?? string.Empty).Replace("%", "%%")))
 			{
-				return QuickJSNativeApi.JS_ThrowInternalError(cx, msg, __arglist());
+				if (ex is QuickJSInterruptedException)
+				{
+					QuickJSNativeApi.JS_ThrowInternalError(ctx, msg, __arglist());
+					JSValue exception = QuickJSNativeApi.JS_GetException(ctx);
+					QuickJSNativeApi.JS_SetUncatchableError(ctx, exception, true);
+					return QuickJSNativeApi.JS_Throw(ctx, exception);
+				}
+				return QuickJSNativeApi.JS_ThrowInternalError(ctx, msg, __arglist());
 			}
 		}
 

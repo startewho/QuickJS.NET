@@ -676,7 +676,30 @@ namespace QuickJS
 				return JSValue.Undefined;
 			if (value.GetType().IsPrimitive)
 			{
-
+				if (value is bool bVal)
+					return JSValue.Create(bVal);
+				if (value is double f64)
+					return JSValue.Create(f64);
+				if (value is float f32)
+					return JSValue.Create(f32);
+				if (value is int i32)
+					return JSValue.Create(i32);
+				if (value is long i64)
+					return JSValue.Create(i64);
+				if (value is byte i8)
+					return JSValue.Create(i8);
+				if (value is short i16)
+					return JSValue.Create(i16);
+				if (value is string s)
+					return JSValue.Create(this.NativeInstance, s);
+				if (value is uint u32)
+					return JSValue.Create(u32);
+				if (value is ulong u64)
+					return JSValue.Create(u64);
+				if (value is uint u16)
+					return JSValue.Create(u16);
+				if (value is uint u8)
+					return JSValue.Create(u8);
 			}
 			throw new NotImplementedException();
 		}

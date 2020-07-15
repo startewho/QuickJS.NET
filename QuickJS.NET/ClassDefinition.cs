@@ -60,49 +60,35 @@ namespace QuickJS
 			classDef.finalizer = _finalizerImpl;
 		}
 
-		private unsafe JSValue CallImpl16(JSContext cx, JSValue func_obj, JSValue this_val, int argc, JSValue[] argv, JSCallFlags flags)
+		private unsafe JSValue CallImpl16(JSContext ctx, JSValue func_obj, JSValue this_val, int argc, JSValue[] argv, JSCallFlags flags)
 		{
 			try
 			{
-				return Call(cx, func_obj, this_val, argc, argv, flags);
+				return Call(ctx, func_obj, this_val, argc, argv, flags);
 			}
 			catch (OutOfMemoryException)
 			{
-				return JS_ThrowOutOfMemory(cx);
+				return JS_ThrowOutOfMemory(ctx);
 			}
 			catch (Exception ex)
 			{
-				IntPtr opaque = JS_GetContextOpaque(cx);
-				if (opaque != IntPtr.Zero)
-					((QuickJSContext)GCHandle.FromIntPtr(opaque).Target).SetClrException(ex);
-
-				fixed (byte* msg = Utils.StringToManagedUTF8(ex.Message.Replace("%", "%%")))
-				{
-					return JS_ThrowInternalError(cx, msg, __arglist());
-				}
+				return Utils.ReportException(ctx, ex);
 			}
 		}
 
-		private unsafe ulong CallImpl8(JSContext cx, JSValue func_obj, JSValue this_val, int argc, JSValue[] argv, JSCallFlags flags)
+		private unsafe ulong CallImpl8(JSContext ctx, JSValue func_obj, JSValue this_val, int argc, JSValue[] argv, JSCallFlags flags)
 		{
 			try
 			{
-				return Call(cx, func_obj, this_val, argc, argv, flags).uint64;
+				return Call(ctx, func_obj, this_val, argc, argv, flags).uint64;
 			}
 			catch (OutOfMemoryException)
 			{
-				return JS_ThrowOutOfMemory(cx);
+				return JS_ThrowOutOfMemory(ctx).uint64;
 			}
 			catch (Exception ex)
 			{
-				IntPtr opaque = JS_GetContextOpaque(cx);
-				if (opaque != IntPtr.Zero)
-					((QuickJSContext)GCHandle.FromIntPtr(opaque).Target).SetClrException(ex);
-
-				fixed (byte* msg = Utils.StringToManagedUTF8(ex.Message.Replace("%", "%%")))
-				{
-					return JS_ThrowInternalError(cx, msg, __arglist()).uint64;
-				}
+				return Utils.ReportException(ctx, ex).uint64;
 			}
 		}
 

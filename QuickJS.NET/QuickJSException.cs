@@ -4,7 +4,7 @@ using System.Linq;
 namespace QuickJS
 {
 	/// <summary>
-	/// Represents errors taht occurs during JS execution.
+	/// Represents errors that occurs during JS execution.
 	/// </summary>
 	public class QuickJSException : Exception
 	{
