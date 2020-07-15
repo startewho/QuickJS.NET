@@ -153,7 +153,12 @@ namespace QuickJS
 		/// </summary>
 		public JSValue NativeInstance
 		{
-			get { return _value; }
+			get
+			{
+				if (_context is null)
+					throw new ObjectDisposedException(this.GetType().Name);
+				return _value;
+			}
 		}
 
 		/// <summary>
