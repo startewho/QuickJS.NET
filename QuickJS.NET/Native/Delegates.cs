@@ -106,11 +106,11 @@ namespace QuickJS.Native
 	public delegate void JSFreeArrayBufferDataFunc(JSRuntime rt, IntPtr opaque, IntPtr ptr);
 
 	/// <summary>
-	///  return != 0 if the JS code needs to be interrupted
+	/// Encapsulates a method that will be automatically called periodically while JavaScript code runs.
 	/// </summary>
-	/// <param name="rt"></param>
-	/// <param name="opaque"></param>
-	/// <returns></returns>
+	/// <param name="rt">The pointer to a JavaScript runtime.</param>
+	/// <param name="opaque">A value containing information to be used by the callback method.</param>
+	/// <returns>Non-zero if the JS code needs to be interrupted.</returns>
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 	public delegate int JSInterruptHandler(JSRuntime rt, IntPtr opaque);
 

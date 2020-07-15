@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
@@ -19,10 +20,17 @@ namespace QuickJS
 		public const int DefaultGCThreshold = (256 * 1024);
 		public const int DefaultMemoryLimit = -1;
 
+		private static readonly JSInterruptHandler _HandleInterrupt = HandleInterrupt;
+
 		private readonly JSRuntime _runtime;
 		private readonly GCHandle _handle;
 		private readonly Thread _thread;
 		private readonly List<ClassDefinition> _classes;
+
+		/// <summary>
+		/// Occurs periodically while JavaScript code runs.
+		/// </summary>
+		public event EventHandler<HandledEventArgs> Interrupt;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="QuickJSRuntime"/>.
@@ -56,7 +64,9 @@ namespace QuickJS
 			_handle = GCHandle.Alloc(this, GCHandleType.Normal);
 			_classes = new List<ClassDefinition>();
 
-			JS_SetRuntimeOpaque(_runtime, GCHandle.ToIntPtr(_handle));
+			IntPtr opaque = GCHandle.ToIntPtr(_handle);
+			JS_SetRuntimeOpaque(_runtime, opaque);
+			JS_SetInterruptHandler(_runtime, _HandleInterrupt, opaque);
 
 			if (memoryLimit > 0)
 				JS_SetMemoryLimit(_runtime, memoryLimit);
@@ -80,8 +90,6 @@ namespace QuickJS
 			JS_FreeRuntime(_runtime);
 			_handle.Free();
 		}
-
-		
 
 		/// <inheritdoc/>
 		public void Dispose()
@@ -338,6 +346,22 @@ namespace QuickJS
 		public bool IsRegisteredClass(JSClassID id)
 		{
 			return JS_IsRegisteredClass(this.NativeInstance, id);
+		}
+
+		/// <summary>
+		/// Raises the <see cref="Interrupt"/> event.
+		/// </summary>
+		/// <param name="e">A <see cref="HandledEventArgs"/> that contains the event data.</param>
+		protected virtual void OnInterrupt(HandledEventArgs e)
+		{
+			Interrupt?.Invoke(this, e);
+		}
+
+		private static int HandleInterrupt(JSRuntime rt, IntPtr opaque)
+		{
+			var e = new HandledEventArgs();
+			((QuickJSRuntime)GCHandle.FromIntPtr(opaque).Target).OnInterrupt(e);
+			return e.Handled ? 1 : 0;
 		}
 
 	}

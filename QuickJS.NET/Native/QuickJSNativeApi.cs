@@ -1726,6 +1726,12 @@ namespace QuickJS.Native
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
 		public unsafe static extern void JS_SetHostPromiseRejectionTracker(JSRuntime rt, JSHostPromiseRejectionTracker cb, void* opaque);
 
+		/// <summary>
+		/// Set a callback method that is automatically called periodically while JavaScript code runs.
+		/// </summary>
+		/// <param name="rt">The pointer to a JavaScript runtime.</param>
+		/// <param name="cb">The callback function to install.</param>
+		/// <param name="opaque">A value containing information to be used by the callback method.</param>
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
 		public static extern void JS_SetInterruptHandler(JSRuntime rt, JSInterruptHandler cb, IntPtr opaque);
 
