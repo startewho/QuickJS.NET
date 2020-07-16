@@ -26,6 +26,8 @@ namespace QuickJS.Native
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 	public unsafe delegate ulong JSCFunctionData32(JSContext ctx, [In] JSValue this_val, int argc, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)] JSValue[] argv, int magic, JSValue* func_data);
 
+	public delegate JSValue JSCFunctionDataDelegate(JSContext ctx, JSValue thisArg, JSValue[] argv, int magic, JSValue[] funcData);
+
 	/// <summary>
 	/// Encapsulates a method that QuickJS uses to mark objects.
 	/// </summary>

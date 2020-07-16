@@ -548,6 +548,45 @@ namespace QuickJS
 		}
 
 		/// <summary>
+		/// Creates a new JavaScript function in this context.
+		/// </summary>
+		/// <param name="function">A delegate to the function that is to be exposed to JavaScript.</param>
+		/// <param name="argCount">The number of arguments the function expects to receive.</param>
+		/// <param name="magic">A magic value.</param>
+		/// <param name="data">An array containing data to be used by the method.</param>
+		/// <returns>A value containing the new function.</returns>
+		public unsafe JSValue CreateFunctionRaw(JSCFunctionData function, int argCount, int magic, JSValue[] data)
+		{
+			var fn = new QuickJSSafeDelegate(function);
+			JSValue fnValue = JS_NewCFunctionData(this.NativeInstance, fn.GetPointer(), argCount, magic, data is null ? 0 : data.Length, data);
+			if (JS_IsException(fnValue))
+				_context.ThrowPendingException();
+			else
+				_functions.Add(fn);
+			return fnValue;
+		}
+
+		/// <summary>
+		/// Creates a new JavaScript function in this context.
+		/// </summary>
+		/// <param name="function">A delegate to the function that is to be exposed to JavaScript.</param>
+		/// <param name="argCount">The number of arguments the function expects to receive.</param>
+		/// <param name="magic">A magic value.</param>
+		/// <param name="data">An array containing data to be used by the method.</param>
+		/// <returns>A value containing the new function.</returns>
+		public JSValue CreateFunctionRaw(JSCFunctionDataDelegate function, int argCount, int magic, JSValue[] data)
+		{
+			int dataLength = data is null ? 0 : data.Length;
+			var fn = new QuickJSSafeDelegate(function, dataLength);
+			JSValue fnValue = JS_NewCFunctionData(this.NativeInstance, fn.GetPointer(), argCount, magic, dataLength, data);
+			if (JS_IsException(fnValue))
+				_context.ThrowPendingException();
+			else
+				_functions.Add(fn);
+			return fnValue;
+		}
+
+		/// <summary>
 		/// Evaluates a script or module source code from the specified file.
 		/// </summary>
 		/// <param name="path">The path to the file that contains source code.</param>

@@ -16,16 +16,18 @@ namespace TestApp
 			using (var rt = new QuickJSRuntime())
 			{
 				rt.StdInitHandlers();
-				using (var cx = rt.CreateContext())
+				using (var context = rt.CreateContext())
 				{
-					cx.StdAddHelpers();
-					cx.InitModuleStd("std");
-					cx.InitModuleOS("os");
+					context.StdAddHelpers();
+					context.InitModuleStd("std");
+					context.InitModuleOS("os");
+
+					PrintHello(context);
 
 					try
 					{
 						string utf8path = @"C:\Users\Имя с пробелом\κάτι εκεί\那裡的東西.js";
-						cx.Eval(@"throw new Error('текст с пробелом\κάτι εκεί\那裡的東西.123')", utf8path, JSEvalFlags.Global);
+						context.Eval(@"throw new Error('текст с пробелом\\κάτι εκεί\\那裡的東西.123')", utf8path, JSEvalFlags.Global);
 					}
 					catch (QuickJSException ex)
 					{
@@ -33,8 +35,8 @@ namespace TestApp
 					}
 
 					Console.WriteLine();
-					(cx.EvalFile(@"G:\BUILD\QuickJS\repl.js", Encoding.ASCII, JSEvalFlags.Module | JSEvalFlags.Strip) as IDisposable)?.Dispose();
-					rt.RunStdLoop(cx);
+					(context.EvalFile(@"G:\BUILD\QuickJS\repl.js", Encoding.ASCII, JSEvalFlags.Module | JSEvalFlags.Strip) as IDisposable)?.Dispose();
+					rt.RunStdLoop(context);
 				}
 				rt.StdFreeHandlers();
 			}
@@ -42,6 +44,47 @@ namespace TestApp
 			Console.WriteLine();
 			Console.WriteLine("press key");
 			Console.ReadKey();
+		}
+
+		private unsafe static void PrintHello(QuickJSContext context)
+		{
+			QuickJSValue globalObj = context.GetGlobal();
+			QuickJSValue obj = QuickJSValue.Create(context);
+			globalObj.DefineFunction("hello", Hello, 1, 0, new[] { JSValue.Create(1), obj.NativeInstance }, JSPropertyFlags.CWE);
+			GC.KeepAlive(obj);
+
+			globalObj.DefineFunction("hello2", Hello2, 1, JSPropertyFlags.CWE);
+
+			globalObj.DefineFunction("hello3", Hello3, 1, 0, new JSValue[0], JSPropertyFlags.CWE);
+
+			try
+			{
+				context.Eval("hello(); hello2('World'); hello3(3);", "script.js", JSEvalFlags.Global);
+			}
+			catch (QuickJSException ex)
+			{
+				Console.WriteLine(ex);
+			}
+		}
+
+		private unsafe static JSValue Hello(JSContext ctx, JSValue thisArg, int argc, JSValue[] argv, int magic, JSValue* data)
+		{
+			string name = argc > 0 ? argv[0].ToString(ctx) : "anonymous";
+			Console.WriteLine($"Hello, {name}!");
+			return JSValue.Undefined;
+		}
+
+		private unsafe static JSValue Hello2(JSContext ctx, JSValue thisArg, int argc, JSValue[] argv)
+		{
+			return Hello(ctx, thisArg, argc, argv, 0, null);
+		}
+
+		private unsafe static JSValue Hello3(JSContext ctx, JSValue thisArg, JSValue[] argv, int magic, JSValue[] data)
+		{
+			fixed (JSValue* fnData = data)
+			{
+				return Hello(ctx, thisArg, argv.Length, argv, magic, fnData);
+			}
 		}
 
 	}

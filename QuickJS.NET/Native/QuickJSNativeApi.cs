@@ -1807,11 +1807,10 @@ namespace QuickJS.Native
 		/// <summary>
 		/// Executes a pending job.
 		/// </summary>
-		/// <param name="rt"></param>
-		/// <param name="ctx"></param>
+		/// <param name="rt">The pointer to the JavaScript runtime.</param>
+		/// <param name="ctx">When this method returns, contains the context of the job.</param>
 		/// <returns>
 		/// Return &lt; 0 if exception, 0 if no job pending, 1 if a job was executed successfully.
-		/// The context of the job is stored in <paramref name="ctx"/>.
 		/// </returns>
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
 		public static extern int JS_ExecutePendingJob(JSRuntime rt, out JSContext ctx);
@@ -1844,69 +1843,240 @@ namespace QuickJS.Native
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
 		public static extern int JS_ResolveModule(JSContext ctx, [In] JSValue obj);
 
+		/// <summary>
+		/// Creates a new JavaScript function in given context.
+		/// </summary>
+		/// <param name="ctx">The poiter to the JavaScript context.</param>
+		/// <param name="func">A <see cref="JSCFunction"/> that represents the method to be executed.</param>
+		/// <param name="name">The name of the function.</param>
+		/// <param name="length">The number of parameters expected by the function.</param>
+		/// <param name="cproto">The type of the function prototype.</param>
+		/// <param name="magic">A magic value.</param>
+		/// <returns>The new JavaScript function that this method creates.</returns>
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
 		public static extern JSValue JS_NewCFunction2(JSContext ctx, JSCFunction func, [MarshalAs(UnmanagedType.LPStr)] string name, int length, JSCFunctionEnum cproto, int magic);
 
+		/// <summary>
+		/// Creates a new JavaScript function in given context.
+		/// </summary>
+		/// <param name="ctx">The poiter to the JavaScript context.</param>
+		/// <param name="func">A <see cref="JSCFunction"/> that represents the method to be executed.</param>
+		/// <param name="name">The pointer to a UTF-8 string that containing the name of the function.</param>
+		/// <param name="length">The number of parameters expected by the function.</param>
+		/// <param name="cproto">The type of the function prototype.</param>
+		/// <param name="magic">A magic value.</param>
+		/// <returns>The new JavaScript function that this method creates.</returns>
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
 		public static extern JSValue JS_NewCFunction2(JSContext ctx, JSCFunction func, IntPtr name, int length, JSCFunctionEnum cproto, int magic);
 
+		/// <summary>
+		/// Creates a new JavaScript function in given context.
+		/// </summary>
+		/// <param name="ctx">The poiter to the JavaScript context.</param>
+		/// <param name="func">A <see cref="JSCFunction"/> that represents the method to be executed.</param>
+		/// <param name="name">The pointer to a UTF-8 string that containing the name of the function.</param>
+		/// <param name="length">The number of parameters expected by the function.</param>
+		/// <param name="cproto">The type of the function prototype.</param>
+		/// <param name="magic">A magic value.</param>
+		/// <returns>The new JavaScript function that this method creates.</returns>
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
 		public unsafe static extern JSValue JS_NewCFunction2(JSContext ctx, JSCFunction func, byte* name, int length, JSCFunctionEnum cproto, int magic);
 
+		/// <summary>
+		/// Creates a new JavaScript function in given context.
+		/// </summary>
+		/// <param name="ctx">The poiter to the JavaScript context.</param>
+		/// <param name="func">The pointer to the <see cref="JSCFunctionMagic"/> (<see cref="JSCFunctionMagic32"/>) delegate to be executed.</param>
+		/// <param name="name">The pointer to a UTF-8 string that containing the name of the function.</param>
+		/// <param name="length">The number of parameters expected by the function.</param>
+		/// <param name="cproto">The type of the function prototype.</param>
+		/// <returns>The new JavaScript function that this method creates.</returns>
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
 		public unsafe static extern JSValue JS_NewCFunction2(JSContext ctx, IntPtr func, byte* name, int length, JSCFunctionEnum cproto, int magic);
 
+		/// <summary>
+		/// Creates a new JavaScript function in given context.
+		/// </summary>
+		/// <param name="ctx">The poiter to the JavaScript context.</param>
+		/// <param name="func">A <see cref="JSCFunctionMagic"/> that represents the method to be executed.</param>
+		/// <param name="asciiname">The name of the function (ASCII only).</param>
+		/// <param name="length">The number of parameters expected by the function.</param>
+		/// <param name="cproto">The type of the function prototype.</param>
+		/// <param name="magic">A magic value.</param>
+		/// <returns>The new JavaScript function that this method creates.</returns>
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl, EntryPoint = "JS_NewCFunction2", CharSet = CharSet.Ansi)]
 		public static extern JSValue JS_NewCFunctionMagic64(JSContext ctx, JSCFunctionMagic func, [MarshalAs(UnmanagedType.LPStr)] string asciiname, int length, JSCFunctionEnum cproto, int magic);
 
+		/// <summary>
+		/// Creates a new JavaScript function in given context.
+		/// </summary>
+		/// <param name="ctx">The poiter to the JavaScript context.</param>
+		/// <param name="func">A <see cref="JSCFunctionMagic"/> that represents the method to be executed.</param>
+		/// <param name="name">The pointer to a UTF-8 string that containing the name of the function.</param>
+		/// <param name="length">The number of parameters expected by the function.</param>
+		/// <param name="cproto">The type of the function prototype.</param>
+		/// <param name="magic">A magic value.</param>
+		/// <returns>The new JavaScript function that this method creates.</returns>
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl, EntryPoint = "JS_NewCFunction2")]
 		public unsafe static extern JSValue JS_NewCFunctionMagic64(JSContext ctx, JSCFunctionMagic func, byte* name, int length, JSCFunctionEnum cproto, int magic);
 
+		/// <summary>
+		/// Creates a new JavaScript function in given context.
+		/// </summary>
+		/// <param name="ctx">The poiter to the JavaScript context.</param>
+		/// <param name="func">A <see cref="JSCFunctionMagic"/> that represents the method to be executed.</param>
+		/// <param name="name">The pointer to a UTF-8 string that containing the name of the function.</param>
+		/// <param name="length">The number of parameters expected by the function.</param>
+		/// <param name="cproto">The type of the function prototype.</param>
+		/// <param name="magic">A magic value.</param>
+		/// <returns>The new JavaScript function that this method creates.</returns>
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl, EntryPoint = "JS_NewCFunction2")]
 		public unsafe static extern JSValue JS_NewCFunctionMagic64(JSContext ctx, JSCFunctionMagic func, IntPtr name, int length, JSCFunctionEnum cproto, int magic);
 
+		/// <summary>
+		/// Creates a new JavaScript function in given context.
+		/// </summary>
+		/// <param name="ctx">The poiter to the JavaScript context.</param>
+		/// <param name="func">A <see cref="JSCFunctionMagic"/> that represents the method to be executed.</param>
+		/// <param name="asciiname">The name of the function (ASCII only).</param>
+		/// <param name="length">The number of parameters expected by the function.</param>
+		/// <param name="cproto">The type of the function prototype.</param>
+		/// <param name="magic">A magic value.</param>
+		/// <returns>The new JavaScript function that this method creates.</returns>
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl, EntryPoint = "JS_NewCFunction2", CharSet = CharSet.Ansi)]
 		public static extern JSValue JS_NewCFunctionMagic32(JSContext ctx, JSCFunctionMagic32 func, [MarshalAs(UnmanagedType.LPStr)] string asciiname, int length, JSCFunctionEnum cproto, int magic);
 
+		/// <summary>
+		/// Creates a new JavaScript function in given context.
+		/// </summary>
+		/// <param name="ctx">The poiter to the JavaScript context.</param>
+		/// <param name="func">A <see cref="JSCFunctionMagic32"/> that represents the method to be executed.</param>
+		/// <param name="name">The pointer to a UTF-8 string that containing the name of the function.</param>
+		/// <param name="length">The number of parameters expected by the function.</param>
+		/// <param name="cproto">The type of the function prototype.</param>
+		/// <param name="magic">A magic value.</param>
+		/// <returns>The new JavaScript function that this method creates.</returns>
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl, EntryPoint = "JS_NewCFunction2")]
 		public unsafe static extern JSValue JS_NewCFunctionMagic32(JSContext ctx, JSCFunctionMagic32 func, byte* name, int length, JSCFunctionEnum cproto, int magic);
 
+		/// <summary>
+		/// Creates a new JavaScript function in given context.
+		/// </summary>
+		/// <param name="ctx">The poiter to the JavaScript context.</param>
+		/// <param name="func">A <see cref="JSCFunctionMagic32"/> that represents the method to be executed.</param>
+		/// <param name="name">The pointer to a UTF-8 string that containing the name of the function.</param>
+		/// <param name="length">The number of parameters expected by the function.</param>
+		/// <param name="cproto">The type of the function prototype.</param>
+		/// <param name="magic">A magic value.</param>
+		/// <returns>The new JavaScript function that this method creates.</returns>
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl, EntryPoint = "JS_NewCFunction2")]
 		public static extern JSValue JS_NewCFunctionMagic32(JSContext ctx, JSCFunctionMagic32 func, IntPtr name, int length, JSCFunctionEnum cproto, int magic);
 
+		/// <summary>
+		/// Creates a new JavaScript function in given context.
+		/// </summary>
+		/// <param name="ctx">The poiter to the JavaScript context.</param>
+		/// <param name="func">The pointer to a <see cref="JSCFunctionMagic"/> (<see cref="JSCFunctionMagic"/>) delegate to be executed.</param>
+		/// <param name="name">The pointer to a UTF-8 string that containing the name of the function.</param>
+		/// <param name="length">The number of parameters expected by the function.</param>
+		/// <param name="cproto">The type of the function prototype.</param>
+		/// <param name="magic">A magic value.</param>
+		/// <returns>The new JavaScript function that this method creates.</returns>
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl, EntryPoint = "JS_NewCFunction2")]
 		public unsafe static extern JSValue JS_NewCFunctionMagic(JSContext ctx, IntPtr func, byte* name, int length, JSCFunctionEnum cproto, int magic);
 
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
 		public static extern void JS_SetConstructor(JSContext ctx, [In] JSValue func_obj, [In] JSValue proto);
 
+		/// <summary>
+		/// Creates a new JavaScript function in given context.
+		/// </summary>
+		/// <param name="ctx">The poiter to the JavaScript context.</param>
+		/// <param name="func">A <see cref="JSCFunctionData"/> that represents the method to be executed.</param>
+		/// <param name="length">The number of parameters expected by the function.</param>
+		/// <param name="magic">A magic value.</param>
+		/// <param name="data_len">The number of elements in the <paramref name="data"/> array.</param>
+		/// <param name="data">An array containing data to be used by the method.</param>
+		/// <returns>The new JavaScript function that this method creates.</returns>
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
 		public static extern JSValue JS_NewCFunctionData(JSContext ctx, JSCFunctionData func, int length, int magic, int data_len, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 4)] JSValue[] data);
 
+		/// <summary>
+		/// Creates a new JavaScript function in given context.
+		/// </summary>
+		/// <param name="ctx">The poiter to the JavaScript context.</param>
+		/// <param name="func">A <see cref="JSCFunctionData32"/> that represents the method to be executed.</param>
+		/// <param name="length">The number of parameters expected by the function.</param>
+		/// <param name="magic">A magic value.</param>
+		/// <param name="data_len">The number of elements in the <paramref name="data"/> array.</param>
+		/// <param name="data">An array containing data to be used by the method.</param>
+		/// <returns>The new JavaScript function that this method creates.</returns>
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
 		public static extern JSValue JS_NewCFunctionData(JSContext ctx, JSCFunctionData32 func, int length, int magic, int data_len, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 4)] JSValue[] data);
 
+		/// <summary>
+		/// Creates a new JavaScript function in given context.
+		/// </summary>
+		/// <param name="ctx">The poiter to the JavaScript context.</param>
+		/// <param name="func">The pointer to the <see cref="JSCFunctionData"/> (<see cref="JSCFunctionData32"/> delegate.</param>
+		/// <param name="length">The number of parameters expected by the function.</param>
+		/// <param name="magic">A magic value.</param>
+		/// <param name="data_len">The number of elements in the <paramref name="data"/> array.</param>
+		/// <param name="data">An array containing data to be used by the method.</param>
+		/// <returns>The new JavaScript function that this method creates.</returns>
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
 		public static extern JSValue JS_NewCFunctionData(JSContext ctx, IntPtr func, int length, int magic, int data_len, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 4)] JSValue[] data);
 
+		/// <summary>
+		/// Creates a new JavaScript function in given context.
+		/// </summary>
+		/// <param name="ctx">The pointer to the JavaScript context.</param>
+		/// <param name="func">A <see cref="JSCFunction"/> that represents the method to be executed.</param>
+		/// <param name="asciiname">The name of the function.</param>
+		/// <param name="length">The number of parameters expected by the function.</param>
+		/// <returns>The new JavaScript function that this method creates.</returns>
 		[MethodImpl(AggressiveInlining)]
 		public static JSValue JS_NewCFunction(JSContext ctx, JSCFunction func, string asciiname, int length)
 		{
 			return JS_NewCFunction2(ctx, func, asciiname, length, JSCFunctionEnum.Generic, 0);
 		}
 
+		/// <summary>
+		/// Creates a new JavaScript function in given context.
+		/// </summary>
+		/// <param name="ctx">The pointer to the JavaScript context.</param>
+		/// <param name="func">A <see cref="JSCFunction"/> that represents the method to be executed.</param>
+		/// <param name="name">The pointer to a UTF-8 string containing the name of the function.</param>
+		/// <param name="length">The number of parameters expected by the function.</param>
+		/// <returns>The new JavaScript function that this method creates.</returns>
 		[MethodImpl(AggressiveInlining)]
 		public unsafe static JSValue JS_NewCFunction(JSContext ctx, JSCFunction func, byte* name, int length)
 		{
 			return JS_NewCFunction2(ctx, func, name, length, JSCFunctionEnum.Generic, 0);
 		}
 
+		/// <summary>
+		/// Creates a new JavaScript function in given context.
+		/// </summary>
+		/// <param name="ctx">The pointer to the JavaScript context.</param>
+		/// <param name="func">The pointer to the <see cref="JSCFunction"/> (<see cref="JSCFunction32"/>) that represents the method to be executed.</param>
+		/// <param name="name">The pointer to a UTF-8 string containing the name of the function.</param>
+		/// <param name="length">The number of parameters expected by the function.</param>
+		/// <returns>The new JavaScript function that this method creates.</returns>
 		[MethodImpl(AggressiveInlining)]
 		public unsafe static JSValue JS_NewCFunction(JSContext ctx, IntPtr func, byte* name, int length)
 		{
 			return JS_NewCFunction2(ctx, func, name, length, JSCFunctionEnum.Generic, 0);
 		}
 
+		/// <summary>
+		/// Creates a new JavaScript function in given context.
+		/// </summary>
+		/// <param name="ctx">The pointer to the JavaScript context.</param>
+		/// <param name="func">A <see cref="JSCFunction"/> that represents the method to be executed.</param>
+		/// <param name="name">The pointer to a UTF-8 string containing the name of the function.</param>
+		/// <param name="length">The number of parameters expected by the function.</param>
+		/// <returns>The new JavaScript function that this method creates.</returns>
 		[MethodImpl(AggressiveInlining)]
 		public static JSValue JS_NewCFunction(JSContext ctx, JSCFunction func, IntPtr name, int length)
 		{

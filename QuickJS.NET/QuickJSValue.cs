@@ -206,6 +206,42 @@ namespace QuickJS
 		}
 
 		/// <summary>
+		/// Creates a native function and assigns it as a property to this JS object.
+		/// </summary>
+		/// <param name="name">The name of the property to be defined or modified.</param>
+		/// <param name="func">The function associated with the property.</param>
+		/// <param name="argCount">The number of arguments the function expects to receive.</param>
+		/// <param name="magic">A magic value.</param>
+		/// <param name="data">An array containing data to be used by the method.</param>
+		/// <param name="flags">A bitwise combination of the <see cref="JSPropertyFlags"/>.</param>
+		/// <returns>true if the property has been defined or redefined; otherwise false.</returns>
+		public unsafe bool DefineFunction(string name, JSCFunctionData func, int argCount, int magic, JSValue[] data, JSPropertyFlags flags)
+		{
+			fixed (byte* aName = Utils.StringToManagedUTF8(name))
+			{
+				return DefinePropertyInternal(aName, Context.CreateFunctionRaw(func, argCount, magic, data), flags);
+			}
+		}
+
+		/// <summary>
+		/// Creates a native function and assigns it as a property to this JS object.
+		/// </summary>
+		/// <param name="name">The name of the property to be defined or modified.</param>
+		/// <param name="func">The function associated with the property.</param>
+		/// <param name="argCount">The number of arguments the function expects to receive.</param>
+		/// <param name="magic">A magic value.</param>
+		/// <param name="data">An array containing data to be used by the method.</param>
+		/// <param name="flags">A bitwise combination of the <see cref="JSPropertyFlags"/>.</param>
+		/// <returns>true if the property has been defined or redefined; otherwise false.</returns>
+		public unsafe bool DefineFunction(string name, JSCFunctionDataDelegate func, int argCount, int magic, JSValue[] data, JSPropertyFlags flags)
+		{
+			fixed (byte* aName = Utils.StringToManagedUTF8(name))
+			{
+				return DefinePropertyInternal(aName, Context.CreateFunctionRaw(func, argCount, magic, data), flags);
+			}
+		}
+
+		/// <summary>
 		/// Defines a new property directly on an object, or modifies an existing property on an object.
 		/// </summary>
 		/// <param name="name">The name of the property to be defined or modified.</param>
