@@ -25,7 +25,7 @@ namespace QuickJS
 		private readonly JSRuntime _runtime;
 		private readonly GCHandle _handle;
 		private readonly Thread _thread;
-		private readonly List<ClassDefinition> _classes;
+		private readonly List<QuickJSClassDefinition> _classes;
 
 		/// <summary>
 		/// Occurs periodically while JavaScript code runs.
@@ -62,7 +62,7 @@ namespace QuickJS
 			_thread = Thread.CurrentThread;
 			_runtime = JS_NewRuntime();
 			_handle = GCHandle.Alloc(this, GCHandleType.Normal);
-			_classes = new List<ClassDefinition>();
+			_classes = new List<QuickJSClassDefinition>();
 
 			IntPtr opaque = GCHandle.ToIntPtr(_handle);
 			JS_SetRuntimeOpaque(_runtime, opaque);
@@ -141,88 +141,19 @@ namespace QuickJS
 		/// Register a new JS class.
 		/// </summary>
 		/// <param name="className">The name of the class.</param>
-		/// <param name="call">
-		/// A function callback if the object of this class is a function. If objects of a class
-		/// shouldn&apos;t be callable, use NULL. Most objects are not callable.
+		/// <param name="classDefinition">
+		/// The descriptor for the JS class being registered.
 		/// </param>
-		/// <param name="gcMark">
-		/// The QuickJS JavaScript engine calls this callback during the mark phase of
-		/// garbage collection.
-		/// </param>
-		/// <param name="finalizer">
-		/// An object finalizer callback. This callback invoked when
-		/// an object is finalized (prepared for garbage collection).
-		/// </param>
-		public unsafe JSClassID RegisterNewClass(string className, JSClassCall call, JSClassGCMark gcMark, JSClassFinalizer finalizer)
+		/// <returns>The class ID of the registered class.</returns>
+		public unsafe JSClassID RegisterNewClass(string className, QuickJSClassDefinition classDefinition)
 		{
 			if (className is null)
 				throw new ArgumentNullException(nameof(className));
+			if (classDefinition is null)
+				throw new ArgumentNullException(nameof(classDefinition));
+			if (_classes.Contains(classDefinition))
+				throw new ArgumentOutOfRangeException(nameof(classDefinition), "Already registered class.");
 
-			var classDefinition = new ClassDefinition(default, call, gcMark, finalizer);
-			var classDef = new JSClassDef();
-			classDefinition.CopyToClassDef(ref classDef);
-			fixed (byte* name = Utils.StringToManagedUTF8(className))
-			{
-				classDef.class_name = new IntPtr(name);
-				if (0 != JS_NewClass(_runtime, classDefinition.ID, classDef))
-					throw new QuickJSRuntimeException("Cannot create a new object internal class.");
-			}
-			_classes.Add(classDefinition);
-			return classDefinition.ID;
-		}
-
-		/// <summary>
-		/// Register a new JS class.
-		/// </summary>
-		/// <param name="className">The name of the class.</param>
-		/// <param name="call">
-		/// A function callback if the object of this class is a function. If objects of a class
-		/// shouldn&apos;t be callable, use NULL. Most objects are not callable.
-		/// </param>
-		/// <param name="gcMark">
-		/// The QuickJS JavaScript engine calls this callback during the mark phase of
-		/// garbage collection.
-		/// </param>
-		/// <param name="finalizer">
-		/// An object finalizer callback. This callback invoked when
-		/// an object is finalized (prepared for garbage collection).
-		/// </param>
-		/// <param name="getOwnProperty">
-		/// A delegate to a method that finds a specified property of an object
-		/// and gets a detailed description of that property.
-		/// </param>
-		/// <param name="getOwnPropertyNames">
-		/// A delegate to a method that gets an array of all properties found
-		/// directly in a given object.
-		/// </param>
-		/// <param name="deleteProperty">
-		/// A delegate to a method that allows to delete properties.
-		/// </param>
-		/// <param name="defineOwnProperty">
-		/// A delegate to a method that defines a new property directly on an object,
-		/// or modifies an existing property on an object.
-		/// </param>
-		/// <param name="hasProperty">
-		/// A delegate to a method that returns a value indicating whether the object
-		/// has the specified property as its own property.
-		/// </param>
-		/// <param name="getProperty">
-		/// A delegate to a method that finds a specified property and retrieve its value.
-		/// </param>
-		/// <param name="setProperty">
-		/// A delegate to a method that assigns a value to a property of an object.
-		/// </param>
-		public unsafe JSClassID RegisterNewClass(string className, JSClassCall call, JSClassGCMark gcMark, JSClassFinalizer finalizer,
-			JSGetOwnPropertyDelegate getOwnProperty, JSGetOwnPropertyNamesDelegate getOwnPropertyNames,
-			JSDeletePropertyDelegate deleteProperty, JSDefineOwnPropertyDelegate defineOwnProperty,
-			JSHasPropertyDelegate hasProperty, JSGetPropertyDelegate getProperty, JSSetPropertyDelegate setProperty)
-		{
-			if (className is null)
-				throw new ArgumentNullException(nameof(className));
-
-			var classDefinition = new ExoticClassDefinition(
-				default, call, gcMark, finalizer, getOwnProperty, getOwnPropertyNames,
-				deleteProperty, defineOwnProperty, hasProperty, getProperty, setProperty);
 			var classDef = new JSClassDef();
 			classDefinition.CopyToClassDef(ref classDef);
 			fixed (byte* name = Utils.StringToManagedUTF8(className))

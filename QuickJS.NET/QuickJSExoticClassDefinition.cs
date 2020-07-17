@@ -1,19 +1,61 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using System.Text;
 using QuickJS.Native;
 using static QuickJS.Native.QuickJSNativeApi;
 
 namespace QuickJS
 {
-	sealed unsafe class ExoticClassDefinition : ClassDefinition
+	/// <summary>
+	/// Describes a class of JavaScript objects.
+	/// </summary>
+	public unsafe class QuickJSExoticClassDefinition : QuickJSClassDefinition
 	{
 		private readonly JSClassExoticMethods _callbacks;
 		private readonly JSClassExoticMethods _callbacksImpl;
 		private IntPtr _exotic;
 
-		public ExoticClassDefinition(JSClassID id, JSClassCall call, JSClassGCMark gcMark, JSClassFinalizer finalizer,
+		/// <summary>
+		/// Initializes a new instance of the <see cref="QuickJSExoticClassDefinition"/> class.
+		/// </summary>
+		/// <param name="id">The class ID.</param>
+		/// <param name="call">
+		/// A function callback if the object of this class is a function. If objects of a class
+		/// shouldn&apos;t be callable, use NULL. Most objects are not callable.
+		/// </param>
+		/// <param name="gcMark">
+		/// The QuickJS JavaScript engine calls this callback during the mark phase of
+		/// garbage collection.
+		/// </param>
+		/// <param name="finalizer">
+		/// An object finalizer callback. This callback invoked when
+		/// an object is finalized (prepared for garbage collection).
+		/// </param>
+		/// <param name="getOwnProperty">
+		/// A delegate to a method that finds a specified property of an object
+		/// and gets a detailed description of that property.
+		/// </param>
+		/// <param name="getOwnPropertyNames">
+		/// A delegate to a method that gets an array of all properties found
+		/// directly in a given object.
+		/// </param>
+		/// <param name="deleteProperty">
+		/// A delegate to a method that allows to delete properties.
+		/// </param>
+		/// <param name="defineOwnProperty">
+		/// A delegate to a method that defines a new property directly on an object,
+		/// or modifies an existing property on an object.
+		/// </param>
+		/// <param name="hasProperty">
+		/// A delegate to a method that returns a value indicating whether the object
+		/// has the specified property as its own property.
+		/// </param>
+		/// <param name="getProperty">
+		/// A delegate to a method that finds a specified property and retrieve its value.
+		/// </param>
+		/// <param name="setProperty">
+		/// A delegate to a method that assigns a value to a property of an object.
+		/// </param>
+		public QuickJSExoticClassDefinition(JSClassID id, JSClassCall call, JSClassGCMark gcMark, JSClassFinalizer finalizer,
 			JSGetOwnPropertyDelegate getOwnProperty, JSGetOwnPropertyNamesDelegate getOwnPropertyNames,
 			JSDeletePropertyDelegate deleteProperty, JSDefineOwnPropertyDelegate defineOwnProperty,
 			JSHasPropertyDelegate hasProperty, JSGetPropertyDelegate getProperty, JSSetPropertyDelegate setProperty)
@@ -45,7 +87,11 @@ namespace QuickJS
 			Marshal.StructureToPtr(_callbacksImpl, _exotic, false);
 		}
 
-		~ExoticClassDefinition()
+		/// <summary>
+		/// Allows an object to try to free resources and perform other
+		/// cleanup operations before it is reclaimed by garbage collection.
+		/// </summary>
+		~QuickJSExoticClassDefinition()
 		{
 			if (_exotic != IntPtr.Zero)
 			{
@@ -54,9 +100,9 @@ namespace QuickJS
 			}
 		}
 
-		public override void CopyToClassDef(ref JSClassDef classDef)
+		protected private override void CopyToClassDefImpl(ref JSClassDef classDef)
 		{
-			base.CopyToClassDef(ref classDef);
+			base.CopyToClassDefImpl(ref classDef);
 			classDef.exotic = _exotic;
 		}
 

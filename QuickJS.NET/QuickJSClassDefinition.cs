@@ -1,20 +1,37 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Text;
 using QuickJS.Native;
 using static QuickJS.Native.QuickJSNativeApi;
 
 namespace QuickJS
 {
-	class ClassDefinition
+	/// <summary>
+	/// Describes a class of JavaScript objects.
+	/// </summary>
+	public class QuickJSClassDefinition
 	{
 		private readonly Delegate _callImpl;
 		private readonly JSClassGCMark _markImpl;
 		private readonly JSClassFinalizer _finalizerImpl;
 
-
-		public unsafe ClassDefinition(JSClassID id, JSClassCall call, JSClassGCMark gcMark, JSClassFinalizer finalizer)
+		/// <summary>
+		/// Initializes a new instance of the <see cref="QuickJSClassDefinition"/> class.
+		/// </summary>
+		/// <param name="id">The class ID.</param>
+		/// <param name="call">
+		/// A function callback if the object of this class is a function. If objects of a class
+		/// shouldn&apos;t be callable, use NULL. Most objects are not callable.
+		/// </param>
+		/// <param name="gcMark">
+		/// The QuickJS JavaScript engine calls this callback during the mark phase of
+		/// garbage collection.
+		/// </param>
+		/// <param name="finalizer">
+		/// An object finalizer callback. This callback invoked when
+		/// an object is finalized (prepared for garbage collection).
+		/// </param>
+		public unsafe QuickJSClassDefinition(JSClassID id, JSClassCall call, JSClassGCMark gcMark, JSClassFinalizer finalizer)
 		{
 			if ((id.ToInt32() & 0xFFFF0000) != 0) // JSObject.class_id is 16 bit unsigned integer.
 				throw new ArgumentOutOfRangeException(nameof(id));
@@ -38,6 +55,9 @@ namespace QuickJS
 			}
 		}
 
+		/// <summary>
+		/// Gets the class ID.
+		/// </summary>
 		public JSClassID ID { get; }
 
 		/// <summary>
@@ -49,15 +69,26 @@ namespace QuickJS
 		/// </summary>
 		public JSClassCall Call { get; }
 
+		/// <summary>
+		/// Gets the object GC mark callback.
+		/// </summary>
 		public JSClassGCMark Mark { get; }
 
+		/// <summary>
+		/// Gets the object finalizer callback.
+		/// </summary>
 		public JSClassFinalizer Finalizer { get; }
 
-		public virtual void CopyToClassDef(ref JSClassDef classDef)
+		protected private virtual void CopyToClassDefImpl(ref JSClassDef classDef)
 		{
 			classDef.call = _callImpl is null ? IntPtr.Zero : Marshal.GetFunctionPointerForDelegate(_callImpl);
 			classDef.gc_mark = _markImpl;
 			classDef.finalizer = _finalizerImpl;
+		}
+
+		internal void CopyToClassDef(ref JSClassDef classDef)
+		{
+			CopyToClassDefImpl(ref classDef);
 		}
 
 		private unsafe JSValue CallImpl16(JSContext ctx, JSValue func_obj, JSValue this_val, int argc, JSValue[] argv, JSCallFlags flags)
@@ -102,6 +133,22 @@ namespace QuickJS
 			try { Finalizer(rt, val); } catch { }
 		}
 
+		/// <summary>
+		/// Creates a new class ID.
+		/// </summary>
+		/// <returns>A new class ID.</returns>
+		[MethodImpl(AggressiveInlining)]
+		public static JSClassID CreateClassID()
+		{
+			var cid = new JSClassID();
+			return JS_NewClassID(ref cid);
+		}
+
+		/// <inheritdoc/>
+		public override int GetHashCode()
+		{
+			return ID.ToInt32();
+		}
 
 	}
 }
