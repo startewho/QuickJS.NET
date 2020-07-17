@@ -63,7 +63,7 @@ namespace QuickJS
 		{
 			if (context is null)
 				throw new ArgumentOutOfRangeException(nameof(context));
-			if (context.Runtime.IsRegisteredClass(classId))
+			if (!context.Runtime.IsRegisteredClass(classId))
 				throw new ArgumentOutOfRangeException(nameof(classId));
 			return new QuickJSValue(context, JSValue.CreateObject(context.NativeInstance, classId));
 		}
