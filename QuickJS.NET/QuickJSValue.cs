@@ -809,6 +809,23 @@ namespace QuickJS
 		}
 
 		/// <summary>
+		/// Create an object as though by using the new keyword and
+		/// the constructor represented by the current instance.
+		/// </summary>
+		/// <param name="args">
+		/// The array of argument values to pass to the constructor.
+		/// </param>
+		/// <returns>The new object that this constructor creates.</returns>
+		/// <exception cref="QuickJSException">An exception has occurred.</exception>
+		public QuickJSValue CallConstructor(params JSValue[] args)
+		{
+			JSValue value = JS_CallConstructor(Context.NativeInstance, this.NativeInstance, args != null ? args.Length : 0, args);
+			if (JS_IsException(value))
+				Context.ThrowPendingException();
+			return (QuickJSValue)Context.ConvertJSValueToClrObject(value, true);
+		}
+
+		/// <summary>
 		/// Converts a JavaScript object or value to a JSON string, optionally replacing values if
 		/// a <paramref name="replacer"/> function is specified or optionally including only
 		/// the specified properties if a <paramref name="replacer"/> array is specified.

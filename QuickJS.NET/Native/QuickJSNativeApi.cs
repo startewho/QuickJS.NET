@@ -1484,9 +1484,31 @@ namespace QuickJS.Native
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
 		public unsafe static extern JSValue JS_Invoke(JSContext ctx, [In] JSValue this_val, JSAtom atom, int argc, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 3)] JSValue[] argv);
 
+		/// <summary>
+		/// Create an object as though by using the new keyword and a JavaScript function.
+		/// </summary>
+		/// <param name="ctx">The JavaScript context.</param>
+		/// <param name="func_obj">The constructor function object.</param>
+		/// <param name="argc">The number of arguments to pass to the constructor.</param>
+		/// <param name="argv">
+		/// Pointer to the element 0 of an array of argument values to pass to the constructor.
+		/// If <paramref name="argc"/> is 0, this may be NULL.
+		/// </param>
+		/// <returns>On success, returns the new object. On error, it returns an exception.</returns>
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
 		public unsafe static extern JSValue JS_CallConstructor(JSContext ctx, [In] JSValue func_obj, int argc, JSValue* argv);
 
+		/// <summary>
+		/// Create an object as though by using the new keyword and a JavaScript function.
+		/// </summary>
+		/// <param name="ctx">The JavaScript context.</param>
+		/// <param name="func_obj">The constructor function object.</param>
+		/// <param name="argc">The number of arguments to pass to the constructor.</param>
+		/// <param name="argv">
+		/// An array of argument values to pass to the constructor.
+		/// If <paramref name="argc"/> is 0, this may be NULL.
+		/// </param>
+		/// <returns>On success, returns the new object. On error, it returns an exception.</returns>
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
 		public unsafe static extern JSValue JS_CallConstructor(JSContext ctx, [In] JSValue func_obj, int argc, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)] JSValue[] argv);
 
