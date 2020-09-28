@@ -774,9 +774,13 @@ namespace QuickJS
 		/// <returns>
 		/// An object containing the return value of the invoked function.
 		/// </returns>
+		/// <exception cref="QuickJSException">An exception has occurred.</exception>
 		public unsafe object Call(JSValue thisArg)
 		{
-			return Context.ConvertJSValueToClrObject(JS_Call(Context.NativeInstance, this.NativeInstance, thisArg, 0, default(JSValue*)), true);
+			JSValue value = JS_Call(Context.NativeInstance, this.NativeInstance, thisArg, 0, default(JSValue*));
+			if (JS_IsException(value))
+				Context.ThrowPendingException();
+			return Context.ConvertJSValueToClrObject(value, true);
 		}
 
 		/// <summary>
@@ -792,12 +796,16 @@ namespace QuickJS
 		/// <returns>
 		/// An object containing the return value of the invoked function.
 		/// </returns>
+		/// <exception cref="QuickJSException">An exception has occurred.</exception>
 		public object Call(JSValue thisArg, params JSValue[] args)
 		{
 			if (args is null)
 				return Call(thisArg);
 
-			return Context.ConvertJSValueToClrObject(JS_Call(Context.NativeInstance, this.NativeInstance, thisArg, args.Length, args), true);
+			JSValue value = JS_Call(Context.NativeInstance, this.NativeInstance, thisArg, args.Length, args);
+			if (JS_IsException(value))
+				Context.ThrowPendingException();
+			return Context.ConvertJSValueToClrObject(value, true);
 		}
 
 		/// <summary>
