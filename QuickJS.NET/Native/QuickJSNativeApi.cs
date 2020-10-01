@@ -1753,9 +1753,29 @@ namespace QuickJS.Native
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
 		public static extern void JS_DetachArrayBuffer(JSContext ctx, [In] JSValue obj);
 
+		/// <summary>
+		/// Retrieves a pointer to the raw binary data buffer.
+		/// </summary>
+		/// <param name="ctx">A pointer to the JavaScript context.</param>
+		/// <param name="size">When this method returns, contains the size of the buffer.</param>
+		/// <param name="arrayBuffer">The ArrayBuffer object.</param>
+		/// <returns>A pointer to the buffer or <see cref="IntPtr.Zero"/> if exception.</returns>
+		/// <remarks>WARNING: any JS call can detach the buffer and render the returned pointer invalid.</remarks>
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
-		public static extern IntPtr JS_GetArrayBuffer(JSContext ctx, out SizeT size, [In] JSValue obj);
+		public static extern IntPtr JS_GetArrayBuffer(JSContext ctx, out SizeT size, [In] JSValue arrayBuffer);
 
+		/// <summary>
+		/// Returns the ArrayBuffer referenced by the typed array.
+		/// </summary>
+		/// <param name="ctx">A pointer to the JavaScript context.</param>
+		/// <param name="obj">The typed array containing the range of elements.</param>
+		/// <param name="byte_offset">The zero-based index of the first element in the range.</param>
+		/// <param name="byte_length">The number of elements in the range.</param>
+		/// <param name="bytes_per_element">The number of bytes per element.</param>
+		/// <returns>
+		/// The buffer associated to the typed array or an exception
+		/// if it is not a typed array or if the buffer is detached.
+		/// </returns>
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
 		public static extern JSValue JS_GetTypedArrayBuffer(JSContext ctx, [In] JSValue obj, out SizeT byte_offset, out SizeT byte_length, out SizeT bytes_per_element);
 
