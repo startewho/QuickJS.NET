@@ -1769,15 +1769,45 @@ namespace QuickJS.Native
 		/// </summary>
 		/// <param name="ctx">A pointer to the JavaScript context.</param>
 		/// <param name="obj">The typed array containing the range of elements.</param>
-		/// <param name="byte_offset">The zero-based index of the first element in the range.</param>
-		/// <param name="byte_length">The number of elements in the range.</param>
-		/// <param name="bytes_per_element">The number of bytes per element.</param>
+		/// <param name="byte_offset">When this method returns, contains the zero-based index of the first element in the range.</param>
+		/// <param name="byte_length">When this method returns, contains the number of elements in the range.</param>
+		/// <param name="bytes_per_element">When this method returns, contains the number of bytes per element.</param>
 		/// <returns>
 		/// The buffer associated to the typed array or an exception
 		/// if it is not a typed array or if the buffer is detached.
 		/// </returns>
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
 		public static extern JSValue JS_GetTypedArrayBuffer(JSContext ctx, [In] JSValue obj, out SizeT byte_offset, out SizeT byte_length, out SizeT bytes_per_element);
+
+		/// <summary>
+		/// Returns the ArrayBuffer referenced by the typed array.
+		/// </summary>
+		/// <param name="ctx">A pointer to the JavaScript context.</param>
+		/// <param name="obj">The typed array containing the range of elements.</param>
+		/// <param name="byte_offset">An unsafe pointer to the value taking the zero-based index of the first element in the range. Can be null.</param>
+		/// <param name="byte_length">An unsafe pointer to the value taking the number of elements in the range. Can be null.</param>
+		/// <param name="bytes_per_element">An unsafe pointer to the value taking the number of bytes per element. Can be null.</param>
+		/// <returns>
+		/// The buffer associated to the typed array or an exception
+		/// if it is not a typed array or if the buffer is detached.
+		/// </returns>
+		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
+		public unsafe static extern JSValue JS_GetTypedArrayBuffer(JSContext ctx, [In] JSValue obj, SizeT* byte_offset, SizeT* byte_length, SizeT* bytes_per_element);
+
+		/// <summary>
+		/// Returns the ArrayBuffer referenced by the typed array.
+		/// </summary>
+		/// <param name="ctx">A pointer to the JavaScript context.</param>
+		/// <param name="obj">The typed array containing the range of elements.</param>
+		/// <returns>
+		/// The buffer associated to the typed array or an exception
+		/// if it is not a typed array or if the buffer is detached.
+		/// </returns>
+		[MethodImpl(AggressiveInlining)]
+		public unsafe static JSValue JS_GetTypedArrayBuffer(JSContext ctx, JSValue obj)
+		{
+			return JS_GetTypedArrayBuffer(ctx, obj, null, null, null);
+		}
 
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
 		public static extern void JS_SetSharedArrayBufferFunctions(JSRuntime rt, in JSSharedArrayBufferFunctions sf);
