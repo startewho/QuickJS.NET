@@ -18,7 +18,7 @@ static void Main()
 
 ## Links
 * The QuickJS Javascript Engine: https://bellard.org/quickjs/
-* Unofficial QuickJS git mirror: https://github.com/horhof/quickjs
+* Official GitHub mirror: https://github.com/bellard/quickjs
 * The QuickJS precompiled binaries used for this project: https://github.com/vmas/QuickJS/releases
 
 ## License
