@@ -130,6 +130,9 @@ namespace QuickJS
 
 		private void OnRuntimeInterrupt(object sender, HandledEventArgs e)
 		{
+			if (_finalizedValues.Count == 0)
+				return;
+
 			QuickJSRefcounted[] refcounted;
 			lock (_finalizedValues)
 			{
