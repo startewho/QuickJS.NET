@@ -174,7 +174,7 @@ namespace QuickJS
 			return JS_DupValue(Context.NativeInstance, this.NativeInstance);
 		}
 
-		private QuickJSContext Context
+		internal QuickJSContext Context
 		{
 			get
 			{

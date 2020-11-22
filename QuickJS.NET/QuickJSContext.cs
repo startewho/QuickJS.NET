@@ -613,6 +613,42 @@ namespace QuickJS
 		}
 
 		/// <summary>
+		/// Evaluates a script or module source code from the specified file.
+		/// </summary>
+		/// <param name="path">The path to the file that contains source code.</param>
+		/// <param name="encoding">The encoding applied to the contents of the file.</param>
+		/// <param name="flags">A bitwise combination of the <see cref="JSEvalFlags"/>.</param>
+		/// <returns>A value of the final expression as a CLR type.</returns>
+		public object EvalFile(string path, Encoding encoding, QuickJSValue thisObj, JSEvalFlags flags)
+		{
+			if (thisObj is null)
+				throw new ArgumentNullException(nameof(thisObj));
+
+			try
+			{
+				if (encoding is UTF8Encoding || encoding is ASCIIEncoding)
+				{
+					byte[] buffer;
+					using (FileStream fs = File.OpenRead(path))
+					{
+						buffer = new byte[fs.Length + 1];
+						fs.Read(buffer, 0, (int)fs.Length);
+						buffer[buffer.Length - 1] = 0;
+					}
+					return EvalThisInternal(buffer, path, thisObj.NativeInstance, flags);
+				}
+				else
+				{
+					return ConvertJSValueToClrObject(EvalThisInternal(Utils.StringToManagedUTF8(File.ReadAllText(path, encoding)), path, thisObj.NativeInstance, flags), true);
+				}
+			}
+			finally
+			{
+				GC.KeepAlive(thisObj);
+			}
+		}
+
+		/// <summary>
 		/// Evaluates JavaScript code represented as a string.
 		/// </summary>
 		/// <param name="code">The JavaScript code.</param>
@@ -626,6 +662,56 @@ namespace QuickJS
 
 			return ConvertJSValueToClrObject(EvalInternal(Utils.StringToManagedUTF8(code), filename, flags), true);
 		}
+
+		/// <summary>
+		/// Evaluates JavaScript code represented as a string.
+		/// </summary>
+		/// <param name="code">The JavaScript code.</param>
+		/// <param name="filename">The path or URI to file where the script in question can be found, if any.</param>
+		/// <param name="thisArg">The object to use as &apos;this&apos;.</param>
+		/// <param name="flags">A bitwise combination of the <see cref="JSEvalFlags"/>.</param>
+		/// <returns>A value of the final expression as a CLR type.</returns>
+		public object Eval(string code, string filename, QuickJSValue thisArg, JSEvalFlags flags)
+		{
+			if (code == null)
+				throw new ArgumentNullException(nameof(code));
+
+			if (thisArg is null)
+				throw new ArgumentNullException(nameof(thisArg));
+
+			if (thisArg.Context != this)
+				throw new ArgumentOutOfRangeException(nameof(thisArg));
+
+			JSValue rv = EvalThisInternal(Utils.StringToManagedUTF8(code), filename, thisArg.NativeInstance, flags);
+			GC.KeepAlive(thisArg);
+			return ConvertJSValueToClrObject(rv, true);
+		}
+
+		/// <summary>
+		/// Evaluates JavaScript code represented as a string.
+		/// </summary>
+		/// <param name="code">The JavaScript code.</param>
+		/// <param name="filename">The path or URI to file where the script in question can be found, if any.</param>
+		/// <param name="thisVal">The value to use as &apos;this&apos;.</param>
+		/// <param name="flags">A bitwise combination of the <see cref="JSEvalFlags"/>.</param>
+		/// <returns>A value of the final expression as a CLR type.</returns>
+		public object Eval(string code, string filename, JSValue thisVal, JSEvalFlags flags)
+		{
+			if (code == null)
+				throw new ArgumentNullException(nameof(code));
+
+			JSValue thisArg = JS_DupValue(this.NativeInstance, thisVal);
+			try
+			{
+				return ConvertJSValueToClrObject(EvalThisInternal(Utils.StringToManagedUTF8(code), filename, thisArg, flags), true);
+			}
+			finally
+			{
+				JS_FreeValue(this.NativeInstance, thisArg);
+			}
+			
+		}
+
 
 		internal unsafe JSValue EvalInternal(byte[] input, string filename, JSEvalFlags flags)
 		{
@@ -647,6 +733,35 @@ namespace QuickJS
 			fixed (byte* pfile = file)
 			{
 				val = JS_Eval(this.NativeInstance, buffer, input.Length - 1, pfile, flags);
+			}
+
+			if (JS_IsException(val))
+			{
+				ThrowPendingException();
+			}
+			return val;
+		}
+
+		internal unsafe JSValue EvalThisInternal(byte[] input, string filename, JSValue thisVal, JSEvalFlags flags)
+		{
+			_clrException = null;
+
+			JSEvalFlags evalType = flags & JSEvalFlags.TypeMask;
+			if (evalType != JSEvalFlags.Global && evalType != JSEvalFlags.Module)
+				throw new ArgumentOutOfRangeException(nameof(flags));
+
+			if (input.Length < 1 || input[input.Length - 1] != 0)
+				throw new ArgumentOutOfRangeException(nameof(input));
+
+			if (filename is null)
+				filename = "<anonymous>";
+
+			JSValue val;
+			byte[] file = Utils.StringToManagedUTF8(filename);
+			fixed (byte* buffer = input)
+			fixed (byte* pfile = file)
+			{
+				val = JS_EvalThis(this.NativeInstance, thisVal, buffer, input.Length - 1, pfile, flags);
 			}
 
 			if (JS_IsException(val))

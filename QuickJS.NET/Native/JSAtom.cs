@@ -45,6 +45,9 @@ namespace QuickJS.Native
 		/// </returns>
 		public string ToString(JSContext ctx)
 		{
+			if (_value == 0)
+				return null;
+
 			IntPtr str = JS_AtomToCString(ctx, this);
 			try
 			{

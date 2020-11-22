@@ -1972,7 +1972,7 @@ namespace QuickJS.Native
 		/// Returns a script or a module name.
 		/// </summary>
 		/// <param name="ctx">The poiter to the JavaScript context.</param>
-		/// <param name="nStackLevels"></param>
+		/// <param name="nStackLevels">The stack level number. The level numbering starts at 0.</param>
 		/// <returns>
 		/// A script name or a module name; <see cref="JSAtom.Null"/> if the name cannot be found.
 		/// </returns>
