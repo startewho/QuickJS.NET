@@ -1522,15 +1522,51 @@ namespace QuickJS.Native
 		[return: MarshalAs(UnmanagedType.Bool)]
 		public unsafe static extern bool JS_DetectModule([MarshalAs(UnmanagedType.LPStr)] string input, SizeT input_len);
 
-		/* 'input' must be zero terminated i.e. input[input_len] = '\0'. */
+		/// <summary>
+		/// Compile and execute a script.
+		/// </summary>
+		/// <param name="ctx">The pointer to a JavaScript context.</param>
+		/// <param name="input">The zero-terminated string containing the script to compile and execute.</param>
+		/// <param name="inputLength">The length of <paramref name="input"/>, in bytes.</param>
+		/// <param name="filename">
+		/// The name of file or URL containing the script.
+		/// Used to report filename or URL in error messages.
+		/// </param>
+		/// <param name="evalFlags">A bitwise combination of the <see cref="JSEvalFlags"/>.</param>
+		/// <returns>The result value or <see cref="JSValue.Exception"/>.</returns>
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
 		public unsafe static extern JSValue JS_Eval(JSContext ctx, byte* input, SizeT input_len, [MarshalAs(UnmanagedType.LPStr)] string filename, JSEvalFlags eval_flags);
 
+		/// <summary>
+		/// Compile and execute a script.
+		/// </summary>
+		/// <param name="ctx">The pointer to a JavaScript context.</param>
+		/// <param name="input">The zero-terminated string containing the script to compile and execute.</param>
+		/// <param name="inputLength">The length of <paramref name="input"/>, in bytes.</param>
+		/// <param name="filename">
+		/// The name of file or URL containing the script.
+		/// Used to report filename or URL in error messages.
+		/// </param>
+		/// <param name="evalFlags">A bitwise combination of the <see cref="JSEvalFlags"/>.</param>
+		/// <returns>The result value or <see cref="JSValue.Exception"/>.</returns>
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
 		public unsafe static extern JSValue JS_Eval(JSContext ctx, byte* input, SizeT input_len, byte* filename, JSEvalFlags eval_flags);
 
-		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-		public static extern JSValue JS_EvalFunction(JSContext ctx, JSValue fun_obj);
+		/// <summary>
+		/// Compile and execute a script.
+		/// </summary>
+		/// <param name="ctx">The pointer to a JavaScript context.</param>
+		/// <param name="thisObj">The JavaScript value referencing to the &apos;this&apos; object.</param>
+		/// <param name="input">The zero-terminated string containing the script to compile and execute.</param>
+		/// <param name="inputLength">The length of <paramref name="input"/>, in bytes.</param>
+		/// <param name="filename">
+		/// The name of file or URL containing the script.
+		/// Used to report filename or URL in error messages.
+		/// </param>
+		/// <param name="evalFlags">A bitwise combination of the <see cref="JSEvalFlags"/>.</param>
+		/// <returns>The result value or <see cref="JSValue.Exception"/>.</returns>
+		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
+		public unsafe static extern JSValue JS_EvalThis(JSContext ctx, [In] JSValue thisObj, byte* input, SizeT inputLength, byte* filename, JSEvalFlags evalFlags);
 
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
 		public static extern JSValue JS_GetGlobalObject(JSContext ctx);
@@ -1836,6 +1872,14 @@ namespace QuickJS.Native
 		public static extern void JS_SetCanBlock(JSRuntime rt, [MarshalAs(UnmanagedType.Bool)] bool can_block);
 
 		/// <summary>
+		/// Sets the [IsHTMLDDA] internal slot.
+		/// </summary>
+		/// <param name="ctx">The poiter to the JavaScript context.</param>
+		/// <param name="obj">The JsvaScript object.</param>
+		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
+		public static extern void JS_SetIsHTMLDDA(JSContext ctx, [In] JSValue obj);
+
+		/// <summary>
 		/// 
 		/// </summary>
 		/// <param name="rt"></param>
@@ -1911,9 +1955,41 @@ namespace QuickJS.Native
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
 		public static extern JSValue JS_ReadObject(JSContext ctx, IntPtr buffer, SizeT bufferSize, JSReaderFlags flags);
 
+		/// <summary>
+		/// Instantiate and evaluate a bytecode function.
+		/// </summary>
+		/// <param name="ctx">The pointer to the JavaScript context.</param>
+		/// <param name="fun_obj">The function object.</param>
+		/// <returns></returns>
+		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+		public static extern JSValue JS_EvalFunction(JSContext ctx, JSValue fun_obj);
+
 		/* load the dependencies of the module 'obj'. Useful when JS_ReadObject() returns a module. */
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
 		public static extern int JS_ResolveModule(JSContext ctx, [In] JSValue obj);
+
+		/// <summary>
+		/// Returns a script or a module name.
+		/// </summary>
+		/// <param name="ctx">The poiter to the JavaScript context.</param>
+		/// <param name="nStackLevels"></param>
+		/// <returns>
+		/// A script name or a module name; <see cref="JSAtom.Null"/> if the name cannot be found.
+		/// </returns>
+		/// <remarks>Only works with not striped bytecode functions.</remarks>
+		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
+		public static extern JSAtom JS_GetScriptOrModuleName(JSContext ctx, int nStackLevels);
+
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="ctx">The poiter to the JavaScript context.</param>
+		/// <param name="basename"></param>
+		/// <param name="filename"></param>
+		/// <returns></returns>
+		/// <remarks>used by os.Worker() and import()</remarks>
+		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
+		public unsafe static extern JSModuleDef* JS_RunModule(JSContext ctx, byte* basename, byte* filename);
 
 		/// <summary>
 		/// Creates a new JavaScript function in given context.

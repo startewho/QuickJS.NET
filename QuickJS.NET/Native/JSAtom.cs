@@ -15,6 +15,14 @@ namespace QuickJS.Native
 		private int _value;
 
 		/// <summary>
+		/// Null.
+		/// </summary>
+		public static JSAtom Null
+		{
+			get { return new JSAtom(); }
+		}
+
+		/// <summary>
 		/// Converts the value of this instance to a 32-bit signed integer.
 		/// </summary>
 		/// <returns>
