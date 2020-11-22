@@ -587,6 +587,144 @@ namespace QuickJS
 		}
 
 		/// <summary>
+		/// Creates a new JavaScript constructor function in this context.
+		/// </summary>
+		/// <param name="name">The name property of the new function object.</param>
+		/// <param name="function">A delegate to the function that is to be exposed to JavaScript.</param>
+		/// <param name="argCount">The number of arguments the function expects to receive.</param>
+		/// <returns>A value containing the new function.</returns>
+		public JSValue CreateConstructorRaw(string name, JSCFunction function, int argCount)
+		{
+			JSValue ctor = CreateFunctionRaw(name, function, argCount);
+			JS_SetConstructorBit(this.NativeInstance, ctor, true);
+			return ctor;
+		}
+
+		/// <summary>
+		/// Creates a new JavaScript constructor function in this context.
+		/// </summary>
+		/// <param name="function">A delegate to the function that is to be exposed to JavaScript.</param>
+		/// <param name="argCount">The number of arguments the function expects to receive.</param>
+		/// <param name="magic">A magic value.</param>
+		/// <param name="data">An array containing data to be used by the method.</param>
+		/// <returns>A value containing the new function.</returns>
+		public JSValue CreateConstructorRaw(JSCFunctionData function, int argCount, int magic, JSValue[] data)
+		{
+			JSValue ctor = CreateFunctionRaw(function, argCount, magic, data);
+			JS_SetConstructorBit(this.NativeInstance, ctor, true);
+			return ctor;
+		}
+
+		/// <summary>
+		/// Creates a new JavaScript function in this context.
+		/// </summary>
+		/// <param name="function">A delegate to the function that is to be exposed to JavaScript.</param>
+		/// <param name="argCount">The number of arguments the function expects to receive.</param>
+		/// <param name="magic">A magic value.</param>
+		/// <param name="data">An array containing data to be used by the method.</param>
+		/// <returns>A value containing the new function.</returns>
+		public JSValue CreateConstructorRaw(JSCFunctionDataDelegate function, int argCount, int magic, JSValue[] data)
+		{
+			JSValue ctor = CreateFunctionRaw(function, argCount, magic, data);
+			JS_SetConstructorBit(this.NativeInstance, ctor, true);
+			return ctor;
+		}
+
+		/// <summary>
+		/// Creates a native constructor function and assigns it as a property to the global object.
+		/// </summary>
+		/// <param name="name">The name property of the new function object.</param>
+		/// <param name="function">A delegate to the function that is to be exposed to JavaScript.</param>
+		/// <param name="argCount">The number of arguments the function expects to receive.</param>
+		/// <param name="flags">A bitwise combination of the <see cref="JSPropertyFlags"/>.</param>
+		/// <returns>true if the property has been defined or redefined; otherwise false.</returns>
+		public unsafe bool DefineConstructor(string name, JSCFunction function, int argCount, JSPropertyFlags flags)
+		{
+			fixed (byte* fnName = Utils.StringToManagedUTF8(name))
+			{
+				int rv = -1;
+				JSValue globObj = JS_GetGlobalObject(this.NativeInstance);
+				try
+				{
+					JSValue ctor = CreateFunctionRawInternal(fnName, function, argCount);
+					JS_SetConstructorBit(this.NativeInstance, ctor, true);
+					rv = JS_DefinePropertyValueStr(this.NativeInstance, globObj, fnName, ctor, flags & JSPropertyFlags.CWE);
+					if (rv == -1)
+						this.NativeInstance.ThrowPendingException();
+				}
+				finally
+				{
+					JS_FreeValue(this.NativeInstance, globObj);
+				}
+				return rv == 1;
+			}
+		}
+
+		/// <summary>
+		/// Creates a native constructor function and assigns it as a property to the global object.
+		/// </summary>
+		/// <param name="name">The name of the property to be defined or modified.</param>
+		/// <param name="func">The function associated with the property.</param>
+		/// <param name="argCount">The number of arguments the function expects to receive.</param>
+		/// <param name="magic">A magic value.</param>
+		/// <param name="data">An array containing data to be used by the method.</param>
+		/// <param name="flags">A bitwise combination of the <see cref="JSPropertyFlags"/>.</param>
+		/// <returns>true if the property has been defined or redefined; otherwise false.</returns>
+		public unsafe bool DefineConstructor(string name, JSCFunctionData func, int argCount, int magic, JSValue[] data, JSPropertyFlags flags)
+		{
+			fixed (byte* aName = Utils.StringToManagedUTF8(name))
+			{
+				int rv = -1;
+				JSValue globObj = JS_GetGlobalObject(this.NativeInstance);
+				try
+				{
+					JSValue ctor = CreateFunctionRaw(func, argCount, magic, data);
+					JS_SetConstructorBit(this.NativeInstance, ctor, true);
+					rv = JS_DefinePropertyValueStr(this.NativeInstance, globObj, aName, ctor, flags & JSPropertyFlags.CWE);
+					if (rv == -1)
+						this.NativeInstance.ThrowPendingException();
+				}
+				finally
+				{
+					JS_FreeValue(this.NativeInstance, globObj);
+				}
+				return rv == 1;
+			}
+		}
+
+		/// <summary>
+		/// Creates a native constructor function and assigns it as a property tothe global object.
+		/// </summary>
+		/// <param name="name">The name of the property to be defined or modified.</param>
+		/// <param name="func">The function associated with the property.</param>
+		/// <param name="argCount">The number of arguments the function expects to receive.</param>
+		/// <param name="magic">A magic value.</param>
+		/// <param name="data">An array containing data to be used by the method.</param>
+		/// <param name="flags">A bitwise combination of the <see cref="JSPropertyFlags"/>.</param>
+		/// <returns>true if the property has been defined or redefined; otherwise false.</returns>
+		public unsafe bool DefineConstructor(string name, JSCFunctionDataDelegate func, int argCount, int magic, JSValue[] data, JSPropertyFlags flags)
+		{
+			fixed (byte* aName = Utils.StringToManagedUTF8(name))
+			{
+				int rv = -1;
+				JSValue globObj = JS_GetGlobalObject(this.NativeInstance);
+				try
+				{
+					JSValue ctor = CreateFunctionRaw(func, argCount, magic, data);
+					JS_SetConstructorBit(this.NativeInstance, ctor, true);
+					rv = JS_DefinePropertyValueStr(this.NativeInstance, globObj, aName, ctor, flags & JSPropertyFlags.CWE);
+					if (rv == -1)
+						this.NativeInstance.ThrowPendingException();
+				}
+				finally
+				{
+					JS_FreeValue(this.NativeInstance, globObj);
+				}
+				return rv == 1;
+			}
+		}
+
+		/// <summary>
 		/// Evaluates a script or module source code from the specified file.
 		/// </summary>
 		/// <param name="path">The path to the file that contains source code.</param>
