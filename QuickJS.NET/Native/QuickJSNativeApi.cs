@@ -103,8 +103,20 @@ namespace QuickJS.Native
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
 		public static extern void JS_SetGCThreshold(JSRuntime rt, SizeT gc_threshold);
 
+		/// <summary>
+		/// Enable or disable checks to avoid overflowing the system stack.
+		/// </summary>
+		/// <param name="rt">The pointer to a JavaScript runtime.</param>
+		/// <param name="stack_size">Use 0 to disable maximum stack size check.</param>
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
 		public static extern void JS_SetMaxStackSize(JSRuntime rt, SizeT stack_size);
+
+		/// <summary>
+		/// Should be called when changing thread to update the stack top value used to check stack overflow.
+		/// </summary>
+		/// <param name="rt">The pointer to a JavaScript runtime.</param>
+		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
+		public static extern void JS_UpdateStackTop(JSRuntime rt);
 
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
 		public static extern JSRuntime JS_NewRuntime2(in JSMallocFunctions mf, IntPtr opaque);
