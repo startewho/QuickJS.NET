@@ -12,7 +12,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>0.0.2.1</Version>
+    <Version>0.0.3.0</Version>
     <Description>C# bindings for QuickJS, a small JavaScript engine by Fabrice Bellard and Charlie Gordon.</Description>
     <PackageTags>QuickJS, JavaScript, ECMAScript, interpreter</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -22,7 +22,7 @@
     <RepositoryUrl>https://github.com/vmas/quickjs.net</RepositoryUrl>
     <NeutralLanguage>en</NeutralLanguage>
     <PackageReleaseNotes>
-      QuickJS 2020-11-08
+      QuickJS 2021-03-27
     </PackageReleaseNotes>
   </PropertyGroup>
 
