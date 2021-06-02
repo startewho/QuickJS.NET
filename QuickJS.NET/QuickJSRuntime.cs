@@ -280,6 +280,14 @@ namespace QuickJS
 		}
 
 		/// <summary>
+		/// Forces an immediate garbage collection.
+		/// </summary>
+		public void Collect()
+		{
+			JS_RunGC(this.NativeInstance);
+		}
+
+		/// <summary>
 		/// Raises the <see cref="Interrupt"/> event.
 		/// </summary>
 		/// <param name="e">A <see cref="HandledEventArgs"/> that contains the event data.</param>
