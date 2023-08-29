@@ -16,7 +16,8 @@ namespace TestApp
 
 			using (var rt = new QuickJSRuntime())
 			{
-				JS_SetModuleLoaderFunc(rt.NativeInstance, null, js_module_loader, 0);
+				rt.SetDefaultModuleLoader();
+				//JS_SetModuleLoaderFunc(rt.NativeInstance, null, js_module_loader, 0);
 				rt.StdInitHandlers();
 				using (var context = rt.CreateContext())
 				{
