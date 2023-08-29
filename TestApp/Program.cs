@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using QuickJS;
@@ -15,28 +16,30 @@ namespace TestApp
 
 			using (var rt = new QuickJSRuntime())
 			{
+				JS_SetModuleLoaderFunc(rt.NativeInstance, null, js_module_loader, 0);
 				rt.StdInitHandlers();
 				using (var context = rt.CreateContext())
 				{
 					context.StdAddHelpers();
 					context.InitModuleStd("std");
 					context.InitModuleOS("os");
+					var path=AppDomain.CurrentDomain.BaseDirectory;
 
 					PrintHello(context);
 
 					try
 					{
-						string utf8path = @"C:\Users\Имя с пробелом\κάτι εκεί\那裡的東西.js";
-						context.Eval(@"throw new Error('текст с пробелом\\κάτι εκεί\\那裡的東西.123')", utf8path, JSEvalFlags.Global);
+						string utf8path = Path.Combine(path,"test.js");
+						context.EvalFile(utf8path,Encoding.UTF8, JSEvalFlags.Module);
 					}
 					catch (QuickJSException ex)
 					{
 						Console.WriteLine(ex);
 					}
 
-					Console.WriteLine();
-					(context.EvalFile(@"G:\BUILD\QuickJS\repl.js", Encoding.ASCII, JSEvalFlags.Module | JSEvalFlags.Strip) as IDisposable)?.Dispose();
-					rt.RunStdLoop(context);
+					//Console.WriteLine();
+					//(context.EvalFile(@"G:\BUILD\QuickJS\repl.js", Encoding.ASCII, JSEvalFlags.Module | JSEvalFlags.Strip) as IDisposable)?.Dispose();
+					//rt.RunStdLoop(context);
 				}
 				rt.StdFreeHandlers();
 			}
