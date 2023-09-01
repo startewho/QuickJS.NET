@@ -2,9 +2,12 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp3.0</TargetFramework>
-    <Platforms>x64;x86</Platforms>
+    <TargetFramework>net8.0</TargetFramework>
+    <Platforms>x64;x86;AnyCPU</Platforms>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	 <PublishSingleFile>true</PublishSingleFile>
+	 <SelfContained>true</SelfContained>
+	 <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(Platform)' == 'x86'">
@@ -20,9 +23,28 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+  <ItemGroup Condition="'$(Platform)'=='AnyCPU'">
+    <None Include="../QuickJS.NET/runtimes/win-x64/native/quickjs.dll">
+      <Link>quickjs.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="../QuickJS.NET/runtimes/linux-x64/native/libquickjs.so">
+      <Link>libquickjs.so</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="../QuickJS.NET/QuickJS.NET.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Js\hello.js">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Js\test.js">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using System.Runtime.InteropServices;
 
 namespace QuickJS.Native
@@ -9,6 +10,19 @@ namespace QuickJS.Native
 	[StructLayout(LayoutKind.Sequential)]
 	public struct JSCFunctionListEntry
 	{
+		public void SetEntry(string funcName, IntPtr funcPtr, byte argLength)
+		{
+			name = Marshal.StringToHGlobalAnsi(funcName);
+			var n = Marshal.PtrToStringAnsi(name);
+			prop_flags = (byte)(JSPropertyFlags.Writable | JSPropertyFlags.Configurable);
+			def_type = JSDefType.CFunc;
+			magic = 0;
+			u.func.cfunc.generic = funcPtr;
+			u.func.length = argLength;
+			u.func.cproto = 0;
+
+		}
+
 		public IntPtr name;
 		private byte prop_flags;
 		[MarshalAs(UnmanagedType.U1)]

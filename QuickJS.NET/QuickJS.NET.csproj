@@ -1,10 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net2.0;net4.0</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <RootNamespace>QuickJS</RootNamespace>
-    <Platforms>AnyCPU</Platforms>
+    <Platforms>AnyCPU;x64</Platforms>
     <RuntimeIdentifiers>win-x86;win-x64;linux-x64</RuntimeIdentifiers>
     <AssemblyOriginatorKeyFile>QuickJS.snk</AssemblyOriginatorKeyFile>
     <SignAssembly Condition="Exists($(AssemblyOriginatorKeyFile))">true</SignAssembly>
@@ -24,6 +23,7 @@
     <PackageReleaseNotes>
       QuickJS 2021-03-27
     </PackageReleaseNotes>
+    <TargetFrameworks>net8.0</TargetFrameworks>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Nuget_Release'">

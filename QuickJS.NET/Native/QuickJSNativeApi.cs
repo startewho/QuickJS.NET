@@ -2254,7 +2254,7 @@ namespace QuickJS.Native
 		public static extern int JS_AddModuleExport(JSContext ctx, JSModuleDef m, [MarshalAs(UnmanagedType.LPStr)] string name);
 
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
-		public static extern int JS_AddModuleExportList(JSContext ctx, JSModuleDef m, in JSCFunctionListEntry tab, int len);
+		public unsafe static extern int JS_AddModuleExportList(JSContext ctx, JSModuleDef m, in JSCFunctionListEntry* table, int len);
 
 		/// <remarks>Can only be called after the module is instantiated</remarks>
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
@@ -2262,7 +2262,7 @@ namespace QuickJS.Native
 
 		/// <remarks>Can only be called after the module is instantiated</remarks>
 		[DllImport("quickjs", CallingConvention = CallingConvention.Cdecl)]
-		public static extern int JS_SetModuleExportList(JSContext ctx, JSModuleDef m, in JSCFunctionListEntry tab, int len);
+		public unsafe static extern int JS_SetModuleExportList(JSContext ctx, JSModuleDef m, in JSCFunctionListEntry* tab, int len);
 
 	}
 

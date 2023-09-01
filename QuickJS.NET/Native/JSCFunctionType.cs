@@ -7,9 +7,9 @@ namespace QuickJS.Native
 	public struct JSCFunctionType
 	{
 		[FieldOffset(0)]
-		public IntPtr func;
-		[FieldOffset(0)]
-		public double fvalue;
+		public IntPtr generic;
+		//[FieldOffset(0)]
+		//public double fvalue;
 	}
 
 	//typedef union JSCFunctionType {
